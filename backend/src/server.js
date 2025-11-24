@@ -34,5 +34,13 @@ app.use("/api/prestasi", prestasiRoutes);
 app.use("/api/bk", bkRoutes);
 app.use("/api/siswa-area", siswaAreaRoutes);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+// const PORT = process.env.PORT || 5000;
+// app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+
+module.exports = app;
+
+// Kode ini agar tetap bisa jalan saat ditest di laptop (node src/server.js)
+if (require.main === module) {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+}
