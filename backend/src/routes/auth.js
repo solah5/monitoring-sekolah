@@ -15,10 +15,13 @@ router.post("/login", async (req, res) => {
     return res.status(400).json({ message: "Username & password wajib" });
 
   try {
-    // REVISI QUERY: Kita JOIN ke tabel guru untuk ambil info wali kelas
+    // PERBAIKAN QUERY:
+    // 1. Hapus 'users.name' (karena kolom ini tidak ada di tabel users)
+    // 2. Ambil 'guru.nama' untuk nama aslinya
     const query = `
-      SELECT users.id, users.name, users.username, users.password, users.role,
+      SELECT users.id, users.username, users.password, users.role,
              guru.id AS guru_id,
+             guru.nama AS nama_guru,
              guru.wali_kelas_tingkat, 
              guru.wali_kelas_rombel
       FROM users
@@ -35,15 +38,19 @@ router.post("/login", async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ message: "Password salah" });
 
-    // Payload Token: Masukkan info wali kelas ke dalam token
+    // Tentukan Nama untuk ditampilkan
+    // Jika dia guru, pakai 'nama_guru'. Jika admin/tidak ada data guru, pakai 'username'
+    const displayName = user.nama_guru || user.username;
+
+    // Payload Token
     const tokenPayload = {
       id: user.id,
-      name: user.name,
+      name: displayName, // Ini yang akan muncul sebagai "Nama" di dashboard
       username: user.username,
       role: user.role,
-      guru_id: user.guru_id, // Penting untuk input nilai
-      wali_kelas_tingkat: user.wali_kelas_tingkat, // Penting untuk filter siswa
-      wali_kelas_rombel: user.wali_kelas_rombel    // Penting untuk filter siswa
+      guru_id: user.guru_id, 
+      wali_kelas_tingkat: user.wali_kelas_tingkat, 
+      wali_kelas_rombel: user.wali_kelas_rombel    
     };
 
     const token = jwt.sign(
