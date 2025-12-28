@@ -3,12 +3,28 @@ const router = express.Router();
 const db = require("../config/db");
 const { auth } = require("../middleware/auth");
 const { logActivity } = require("../utils/logger"); 
-// router.use(auth("admin"));
 
+// GET ALL SISWA (DENGAN FILTER WALI KELAS)
 router.get("/", auth(["admin", "guru", "bk"]), async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM siswa");
+    const { role, wali_kelas_tingkat, wali_kelas_rombel } = req.user;
+
+    let query = "SELECT * FROM siswa";
+    let params = [];
+
+    // LOGIKA FILTER DOSEN PENGUJI:
+    // Jika dia Guru, DAN dia punya data wali kelas (bukan null)
+    if (role === 'guru' && wali_kelas_tingkat && wali_kelas_rombel) {
+      query += " WHERE kelas = ? AND rombel = ? ORDER BY nama ASC";
+      params = [wali_kelas_tingkat, wali_kelas_rombel];
+    } else {
+      // Jika Admin/BK, tampilkan semua urut nama
+      query += " ORDER BY nama ASC";
+    }
+
+    const [rows] = await db.query(query, params);
     res.json(rows);
+
   } catch (err) {
     console.error(err);
     res.status(500).send(err);
@@ -27,77 +43,33 @@ router.get("/:id", auth(["admin", "guru", "bk"]), async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+// Create, Update, Delete (Biasanya Admin)
+router.post("/", auth(["admin"]), async (req, res) => {
   try {
-    const { nama, nis, nisn, kelas, tahun_masuk } = req.body;
+    const { nama, nis, nisn, kelas, rombel, tahun_masuk } = req.body; // Tambah rombel
 
-    if (!nama || !nis || !nisn || !kelas || !tahun_masuk)
-      return res
-        .status(400)
-        .json({
-          message: "Lengkapi data (Nama, NIS, NISN, Kelas, Thn. Masuk)",
-        });
+    if (!nama || !nis || !kelas || !rombel)
+      return res.status(400).json({ message: "Data tidak lengkap" });
 
     const [result] = await db.query(
-      "INSERT INTO siswa (nama, nis, nisn, kelas, tahun_masuk) VALUES (?, ?, ?, ?, ?)",
-      [nama, nis, nisn, kelas, tahun_masuk]
+      "INSERT INTO siswa (nama, nis, nisn, kelas, rombel, tahun_masuk) VALUES (?, ?, ?, ?, ?, ?)",
+      [nama, nis, nisn, kelas, rombel, tahun_masuk]
     );
 
-    logActivity(req.user.name, "Menambah Siswa", `Nama: ${nama}, NIS: ${nis}`);
-
+    logActivity(req.user.name, "Menambah Siswa", `Nama: ${nama}`);
     res.json({ message: "Siswa created", id: result.insertId });
   } catch (err) {
-    console.error("INSERT ERROR:", err);
-    if (err.code === "ER_DUP_ENTRY") {
-      return res
-        .status(400)
-        .json({ message: "NIS atau NISN sudah terdaftar." });
-    }
-    res.status(500).json({ message: "Error", error: err });
-  }
-});
-
-router.put("/:id", async (req, res) => {
-  try {
-    const { nama, nis, nisn, kelas, tahun_masuk, tahun_keluar } = req.body;
-
-    await db.query(
-      "UPDATE siswa SET nama=?, nis=?, nisn=?, kelas=?, tahun_masuk=?, tahun_keluar=? WHERE id=?",
-      [nama, nis, nisn, kelas, tahun_masuk, tahun_keluar || null, req.params.id]
-    );
-
-    logActivity(
-      req.user.name,
-      "Mengedit Siswa",
-      `ID: ${req.params.id}, Nama: ${nama}`
-    );
-
-    res.json({ message: "Siswa updated" });
-  } catch (err) {
     console.error(err);
-    if (err.code === "ER_DUP_ENTRY") {
-      return res
-        .status(400)
-        .json({ message: "NIS atau NISN sudah terdaftar." });
-    }
-    res.status(500).send(err);
+    res.status(500).json({ message: err.message });
   }
 });
 
-router.delete("/:id", async (req, res) => {
+// Update & Delete disederhanakan untuk Admin
+router.delete("/:id", auth(["admin"]), async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT nama FROM siswa WHERE id = ?", [
-      req.params.id,
-    ]);
-    const namaSiswa = rows[0] ? rows[0].nama : `ID: ${req.params.id}`;
-
     await db.query("DELETE FROM siswa WHERE id=?", [req.params.id]);
-
-    logActivity(req.user.name, "Menghapus Siswa", `Nama: ${namaSiswa}`);
-
     res.json({ message: "Siswa deleted" });
   } catch (err) {
-    console.error(err);
     res.status(500).send(err);
   }
 });

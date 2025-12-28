@@ -8,7 +8,6 @@ const router = express.Router();
 
 /**
  * POST /api/auth/login
- * body: { username, password }
  */
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
@@ -16,25 +15,46 @@ router.post("/login", async (req, res) => {
     return res.status(400).json({ message: "Username & password wajib" });
 
   try {
-    const [rows] = await pool.query(
-      "SELECT id, name, username, password, role FROM users WHERE username=? LIMIT 1",
-      [username]
-    );
+    // REVISI QUERY: Kita JOIN ke tabel guru untuk ambil info wali kelas
+    const query = `
+      SELECT users.id, users.name, users.username, users.password, users.role,
+             guru.id AS guru_id,
+             guru.wali_kelas_tingkat, 
+             guru.wali_kelas_rombel
+      FROM users
+      LEFT JOIN guru ON users.id = guru.user_id
+      WHERE users.username = ? 
+      LIMIT 1
+    `;
+
+    const [rows] = await pool.query(query, [username]);
     const user = rows[0];
+
     if (!user) return res.status(401).json({ message: "User tidak ditemukan" });
 
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ message: "Password salah" });
 
+    // Payload Token: Masukkan info wali kelas ke dalam token
+    const tokenPayload = {
+      id: user.id,
+      name: user.name,
+      username: user.username,
+      role: user.role,
+      guru_id: user.guru_id, // Penting untuk input nilai
+      wali_kelas_tingkat: user.wali_kelas_tingkat, // Penting untuk filter siswa
+      wali_kelas_rombel: user.wali_kelas_rombel    // Penting untuk filter siswa
+    };
+
     const token = jwt.sign(
-      { id: user.id, name: user.name, username: user.username, role: user.role },
+      tokenPayload,
       process.env.JWT_SECRET,
       { expiresIn: "12h" }
     );
 
     res.json({
       token,
-      user: { id: user.id, name: user.name, username: user.username, role: user.role },
+      user: tokenPayload,
     });
   } catch (e) {
     console.error(e);
@@ -42,7 +62,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-/** GET /api/auth/me (cek token) */
+/** GET /api/auth/me */
 router.get("/me", auth(), async (req, res) => {
   res.json({ user: req.user });
 });
