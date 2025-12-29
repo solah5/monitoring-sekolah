@@ -6,21 +6,36 @@ const { logActivity } = require("../utils/logger");
 
 router.use(auth(["guru", "admin", "bk"]));
 
+// GET: Ambil Prestasi (Filter Wali Kelas)
 router.get("/", async (req, res) => {
   try {
-    const query = `
-      SELECT prestasi.*, siswa.nama AS nama_siswa, siswa.kelas 
+    const { role, wali_kelas_tingkat, wali_kelas_rombel } = req.user;
+
+    let query = `
+      SELECT prestasi.*, siswa.nama AS nama_siswa, siswa.kelas, siswa.nis
       FROM prestasi 
       JOIN siswa ON prestasi.siswa_id = siswa.id
-      ORDER BY prestasi.created_at DESC
     `;
-    const [rows] = await db.query(query);
+    
+    let params = [];
+
+    // LOGIKA FILTER WALI KELAS
+    if (role === 'guru' && wali_kelas_tingkat) {
+       query += ` WHERE siswa.kelas = ? AND siswa.rombel = ?`;
+       params.push(wali_kelas_tingkat, wali_kelas_rombel);
+    }
+
+    query += ` ORDER BY prestasi.created_at DESC`;
+
+    const [rows] = await db.query(query, params);
     res.json(rows);
   } catch (err) {
+    console.error(err);
     res.status(500).send(err);
   }
 });
 
+// POST: Tambah Prestasi
 router.post("/", async (req, res) => {
   try {
     const { siswa_id, judul_prestasi, tingkat, tahun } = req.body;
@@ -38,12 +53,13 @@ router.post("/", async (req, res) => {
   }
 });
 
+// PUT: Edit Prestasi
 router.put("/:id", async (req, res) => {
   try {
-    const { siswa_id, judul_prestasi, tingkat, tahun } = req.body;
+    const { judul_prestasi, tingkat, tahun } = req.body;
     await db.query(
-      "UPDATE prestasi SET siswa_id=?, judul_prestasi=?, tingkat=?, tahun=? WHERE id=?",
-      [siswa_id, judul_prestasi, tingkat, tahun, req.params.id]
+      "UPDATE prestasi SET judul_prestasi=?, tingkat=?, tahun=? WHERE id=?",
+      [judul_prestasi, tingkat, tahun, req.params.id]
     );
     logActivity(req.user.name, "Edit Prestasi", `ID: ${req.params.id}`);
     res.json({ message: "Prestasi berhasil diupdate" });
@@ -52,6 +68,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+// DELETE: Hapus
 router.delete("/:id", async (req, res) => {
   try {
     await db.query("DELETE FROM prestasi WHERE id=?", [req.params.id]);
