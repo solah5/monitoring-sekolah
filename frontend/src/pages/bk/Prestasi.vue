@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex">
+  <div class="min-h-screen bg-gray-50 flex font-sans">
     <div v-if="openSidebar" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" @click="openSidebar = false"></div>
     <aside :class="['h-screen w-64 bg-[#0057A8] text-white flex-col overflow-y-auto transition-transform duration-300 fixed md:relative z-50', openSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0', openSidebar ? 'flex' : 'hidden md:flex']">
       <div class="relative z-50 bg-[#0057A8] h-full flex flex-col">
@@ -43,6 +43,7 @@
           <table class="w-full text-left min-w-full">
             <thead class="bg-gray-50 border-b border-gray-200">
               <tr>
+                <th class="py-3 px-5 text-sm font-semibold text-gray-600">No</th>
                 <th class="py-3 px-5 text-sm font-semibold text-gray-600">Nama Siswa</th>
                 <th class="py-3 px-5 text-sm font-semibold text-gray-600">Judul Prestasi</th>
                 <th class="py-3 px-5 text-sm font-semibold text-gray-600">Tingkat</th>
@@ -51,8 +52,9 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-if="paginatedData.length === 0"><td colspan="5" class="py-6 text-center text-gray-500">{{ searchQuery ? 'Data tidak ditemukan.' : 'Belum ada data prestasi.' }}</td></tr>
-              <tr v-for="item in paginatedData" :key="item.id" class="border-b border-gray-100 hover:bg-gray-50">
+              <tr v-if="paginatedData.length === 0"><td colspan="6" class="py-6 text-center text-gray-500">{{ searchQuery ? 'Data tidak ditemukan.' : 'Belum ada data prestasi.' }}</td></tr>
+              <tr v-for="(item, index) in paginatedData" :key="item.id" class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="py-3 px-5 text-sm text-gray-700">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
                 <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">
                     {{ item.nama_siswa }} <span class="text-xs text-gray-400">({{ item.kelas }} - {{ item.rombel }})</span>
                 </td>
@@ -133,7 +135,7 @@
 import axios from "axios";
 import Toast from "@/components/Toast.vue";
 import Avatar from "@/components/Avatar.vue";
-import SearchableSelect from "@/components/SearchableSelect.vue"; // Pastikan komponen ini ada
+import SearchableSelect from "@/components/SearchableSelect.vue"; 
 import { HomeIcon, ChartBarIcon, TrophyIcon, ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, PlusIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon } from "@heroicons/vue/24/solid";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
@@ -190,7 +192,10 @@ export default {
          ]);
          this.prestasiList = prestasiRes.data;
          this.siswaList = siswaRes.data;
-       } catch (e) { if(e.response?.status === 401) this.logout(); }
+       } catch (e) { 
+         if(e.response?.status === 401) this.logout();
+         else console.error("Gagal load data:", e);
+       }
     },
     openForm() {
       this.form = { id: null, siswa_id: null, siswa_nama: "", judul_prestasi: "", tingkat: "Sekolah", tahun: new Date().getFullYear() };

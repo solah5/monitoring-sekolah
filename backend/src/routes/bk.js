@@ -28,7 +28,7 @@ router.get("/dashboard", async (req, res) => {
 // GET /api/bk/rekap (Data Siswa + Rata-rata Nilai + Prestasi)
 router.get("/rekap", async (req, res) => {
   try {
-    // UPDATE: Menambahkan s.rombel ke dalam SELECT
+    // UPDATE PENTING: Tambahkan s.rombel di sini
     const query = `
       SELECT 
         s.id, s.nama, s.nis, s.kelas, s.rombel, s.status_eligible,
@@ -52,7 +52,7 @@ router.get("/detail/:siswa_id", async (req, res) => {
   try {
     const { siswa_id } = req.params;
     
-    // Ambil Nilai (Pastikan tabel nilai dan mapel ada)
+    // Ambil Nilai
     const [nilai] = await db.query(`
       SELECT n.*, m.nama_mapel 
       FROM nilai n 

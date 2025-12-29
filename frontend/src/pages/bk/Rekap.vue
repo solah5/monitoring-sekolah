@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex">
+  <div class="min-h-screen bg-gray-50 flex font-sans">
     <div v-if="openSidebar" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" @click="openSidebar = false"></div>
     <aside :class="['h-screen w-64 bg-[#0057A8] text-white flex-col overflow-y-auto transition-transform duration-300 fixed md:relative z-50', openSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0', openSidebar ? 'flex' : 'hidden md:flex']">
       <div class="relative z-50 bg-[#0057A8] h-full flex flex-col">
@@ -29,10 +29,12 @@
       </header>
 
       <main class="flex-1 p-4 md:p-8">
+        <h2 class="md:hidden text-2xl font-bold text-gray-800 mb-6">Rekapitulasi Nilai Siswa</h2>
+
         <div class="flex justify-end mb-6">
           <div class="relative w-full md:w-64">
             <span class="absolute inset-y-0 left-0 flex items-center pl-3"><MagnifyingGlassIcon class="w-5 h-5 text-gray-400" /></span>
-            <input v-model="searchQuery" type="text" placeholder="Cari siswa atau kelas..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+            <input v-model="searchQuery" type="text" placeholder="Cari siswa, kelas, rombel..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
           </div>
         </div>
 
@@ -185,7 +187,13 @@ export default {
     filteredData() {
       if (!this.searchQuery) return this.siswaList;
       const q = this.searchQuery.toLowerCase();
-      return this.siswaList.filter(item => item.nama.toLowerCase().includes(q) || item.kelas.toLowerCase().includes(q) || item.nis.includes(q));
+      // UPDATE: Tambah filter Rombel
+      return this.siswaList.filter(item => 
+        item.nama.toLowerCase().includes(q) || 
+        item.kelas.toLowerCase().includes(q) || 
+        item.rombel.toLowerCase().includes(q) ||
+        item.nis.includes(q)
+      );
     },
     totalPages() { return Math.ceil(this.filteredData.length / this.itemsPerPage); },
     paginatedData() {
@@ -200,7 +208,10 @@ export default {
       try {
         const { data } = await axios.get(`${API_URL}/rekap`, this.getAuthConfig());
         this.siswaList = data;
-      } catch (e) { if(e.response?.status === 401) this.logout(); }
+      } catch (e) { 
+        console.error(e);
+        if(e.response?.status === 401) this.logout();
+      }
     },
     async openDetail(item) {
       this.selectedSiswa = item;

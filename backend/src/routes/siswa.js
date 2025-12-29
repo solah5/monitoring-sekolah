@@ -4,9 +4,18 @@ const db = require("../config/db");
 const { auth } = require("../middleware/auth");
 const { logActivity } = require("../utils/logger");
 
-router.use(auth("admin"));
+// 1. Izinkan Admin, BK, dan Guru masuk ke router ini
+router.use(auth(["admin", "bk", "guru"]));
 
-// GET: Ambil Semua Siswa
+// 2. Middleware khusus untuk membatasi Edit/Hapus hanya untuk Admin
+const adminOnly = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: "Akses ditolak. Hanya Admin yang boleh mengubah data siswa." });
+  }
+  next();
+};
+
+// GET: Ambil Semua Siswa (Bisa diakses Admin, BK, Guru)
 router.get("/", async (req, res) => {
   try {
     // Urutkan berdasarkan Kelas -> Rombel -> Nama
@@ -18,8 +27,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-// POST: Tambah Siswa
-router.post("/", async (req, res) => {
+// POST: Tambah Siswa (Hanya Admin)
+router.post("/", adminOnly, async (req, res) => {
   try {
     const { nis, nama, kelas, rombel } = req.body;
 
@@ -43,8 +52,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-// PUT: Edit Siswa
-router.put("/:id", async (req, res) => {
+// PUT: Edit Siswa (Hanya Admin)
+router.put("/:id", adminOnly, async (req, res) => {
   try {
     const { nis, nama, kelas, rombel } = req.body;
 
@@ -61,8 +70,8 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// DELETE: Hapus Siswa
-router.delete("/:id", async (req, res) => {
+// DELETE: Hapus Siswa (Hanya Admin)
+router.delete("/:id", adminOnly, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT nama FROM siswa WHERE id=?", [req.params.id]);
     const namaSiswa = rows[0] ? rows[0].nama : "Unknown";
