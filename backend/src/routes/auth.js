@@ -15,17 +15,19 @@ router.post("/login", async (req, res) => {
     return res.status(400).json({ message: "Username & password wajib" });
 
   try {
-    // PERBAIKAN:
-    // 1. Hapus 'users.name' dari SELECT (karena kolom itu tidak ada).
-    // 2. Ambil 'guru.nama' sebagai ganti nama asli user jika dia guru.
+    // PERBAIKAN QUERY:
+    // 1. Hapus 'users.name' (karena kolom ini tidak ada di DB Anda)
+    // 2. Ambil 'guru.nama' dan 'siswa.nama' lewat JOIN
     const query = `
       SELECT users.id, users.username, users.password, users.role,
              guru.id AS guru_id,
              guru.nama AS nama_guru,
              guru.wali_kelas_tingkat, 
-             guru.wali_kelas_rombel
+             guru.wali_kelas_rombel,
+             siswa.nama AS nama_siswa
       FROM users
       LEFT JOIN guru ON users.id = guru.user_id
+      LEFT JOIN siswa ON users.id = siswa.user_id
       WHERE users.username = ? 
       LIMIT 1
     `;
@@ -38,25 +40,27 @@ router.post("/login", async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ message: "Password salah" });
 
-    // Tentukan Nama Tampilan (Display Name)
-    // Jika user adalah guru, pakai nama dari tabel guru.
-    // Jika admin/lainnya, pakai username atau default 'Administrator'.
-    let displayName = user.username;
+    // LOGIKA PENENTUAN NAMA:
+    // Prioritaskan nama dari tabel Guru/Siswa. Jika tidak ada (misal Admin), pakai 'Administrator' atau username.
+    let displayName = user.username; 
+    
     if (user.role === 'guru' && user.nama_guru) {
       displayName = user.nama_guru;
+    } else if (user.role === 'siswa' && user.nama_siswa) {
+      displayName = user.nama_siswa;
     } else if (user.role === 'admin') {
-      displayName = 'Administrator';
+      displayName = "Administrator"; 
     }
 
     // Payload Token
     const tokenPayload = {
       id: user.id,
-      name: displayName, // Frontend akan membaca ini sebagai user.name
+      name: displayName, // Frontend akan membaca ini sebagai nama user
       username: user.username,
       role: user.role,
-      guru_id: user.guru_id,
-      wali_kelas_tingkat: user.wali_kelas_tingkat,
-      wali_kelas_rombel: user.wali_kelas_rombel
+      guru_id: user.guru_id, 
+      wali_kelas_tingkat: user.wali_kelas_tingkat, 
+      wali_kelas_rombel: user.wali_kelas_rombel    
     };
 
     const token = jwt.sign(
@@ -70,7 +74,7 @@ router.post("/login", async (req, res) => {
       user: tokenPayload,
     });
   } catch (e) {
-    console.error(e);
+    console.error("Login Error:", e);
     res.status(500).json({ message: "Server error" });
   }
 });
