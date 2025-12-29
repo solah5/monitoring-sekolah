@@ -190,7 +190,7 @@ import {
     XMarkIcon, 
     PlusIcon, 
     TrashIcon, 
-    PencilIcon, // Jangan lupa import PencilIcon
+    PencilIcon, // Import Icon Pensil
     BookOpenIcon 
 } from "@heroicons/vue/24/solid";
 
