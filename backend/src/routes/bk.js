@@ -4,10 +4,9 @@ const db = require("../config/db");
 const { auth } = require("../middleware/auth");
 const { logActivity } = require("../utils/logger");
 
-// Hanya Guru BK dan Admin yang boleh akses
 router.use(auth(["bk", "admin"]));
 
-// GET /api/bk/dashboard (Statistik)
+// GET /api/bk/dashboard
 router.get("/dashboard", async (req, res) => {
   try {
     const [siswa] = await db.query("SELECT COUNT(*) as total FROM siswa");
@@ -20,19 +19,18 @@ router.get("/dashboard", async (req, res) => {
       total_prestasi: prestasi[0].total
     });
   } catch (err) {
-    console.error("Error Dashboard BK:", err);
     res.status(500).send(err);
   }
 });
 
-// GET /api/bk/rekap (Data Siswa + Rata-rata Nilai + Prestasi)
+// GET /api/bk/rekap
 router.get("/rekap", async (req, res) => {
   try {
-    // UPDATE PENTING: Tambahkan s.rombel di sini
+    // PERBAIKAN: Menggunakan 'n.nilai_akhir' sesuai struktur tabel database Anda
     const query = `
       SELECT 
         s.id, s.nama, s.nis, s.kelas, s.rombel, s.status_eligible,
-        COALESCE(AVG(n.nilai), 0) as rata_rata,
+        COALESCE(AVG(n.nilai_akhir), 0) as rata_rata, 
         (SELECT COUNT(*) FROM prestasi p WHERE p.siswa_id = s.id) as jumlah_prestasi
       FROM siswa s
       LEFT JOIN nilai n ON s.id = n.siswa_id
@@ -42,29 +40,25 @@ router.get("/rekap", async (req, res) => {
     const [rows] = await db.query(query);
     res.json(rows);
   } catch (err) {
-    console.error(err);
+    console.error("SQL Error:", err);
     res.status(500).send(err);
   }
 });
 
-// GET /api/bk/detail/:siswa_id (Lihat Detail Nilai & Prestasi)
+// GET Detail
 router.get("/detail/:siswa_id", async (req, res) => {
   try {
     const { siswa_id } = req.params;
-    
-    // Ambil Nilai
+    // Menggunakan nilai_akhir untuk detail juga
     const [nilai] = await db.query(`
-      SELECT n.*, m.nama_mapel 
+      SELECT n.id, n.nilai_akhir as nilai, m.nama_mapel, n.semester
       FROM nilai n 
       JOIN mapel m ON n.mapel_id = m.id 
       WHERE n.siswa_id = ?
       ORDER BY m.nama_mapel ASC
     `, [siswa_id]);
 
-    // Ambil Prestasi
-    const [prestasi] = await db.query(`
-      SELECT * FROM prestasi WHERE siswa_id = ? ORDER BY tahun DESC
-    `, [siswa_id]);
+    const [prestasi] = await db.query("SELECT * FROM prestasi WHERE siswa_id = ?", [siswa_id]);
 
     res.json({ nilai, prestasi });
   } catch (err) {
@@ -72,19 +66,12 @@ router.get("/detail/:siswa_id", async (req, res) => {
   }
 });
 
-// PUT /api/bk/eligibility/:siswa_id (Update Status Eligible)
+// PUT Eligibility
 router.put("/eligibility/:siswa_id", async (req, res) => {
   try {
-    const { status } = req.body; // 'Eligible', 'Tidak Eligible', 'Pending'
-    const { siswa_id } = req.params;
-
-    await db.query("UPDATE siswa SET status_eligible = ? WHERE id = ?", [status, siswa_id]);
-    
-    // Ambil nama siswa untuk log
-    const [s] = await db.query("SELECT nama FROM siswa WHERE id = ?", [siswa_id]);
-    logActivity(req.user.name, "Update Eligibility", `Siswa: ${s[0]?.nama}, Status: ${status}`);
-
-    res.json({ message: "Status berhasil diperbarui" });
+    const { status } = req.body;
+    await db.query("UPDATE siswa SET status_eligible = ? WHERE id = ?", [status, req.params.siswa_id]);
+    res.json({ message: "Status updated" });
   } catch (err) {
     res.status(500).send(err);
   }
