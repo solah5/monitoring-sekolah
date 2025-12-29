@@ -49,7 +49,7 @@
             <TrophyIcon class="w-6 h-6 text-blue-600 mt-0.5" />
             <div>
                 <h3 class="font-bold text-blue-800">Kelola Prestasi</h3>
-                <p class="text-sm text-blue-600">Klik tombol <b>(+) Tambah</b> pada baris nama siswa untuk menambahkan prestasi baru.</p>
+                <p class="text-sm text-blue-600">Klik tombol <b>(+) Tambah</b> untuk menambah. Klik <b>Ikon Pensil</b> pada label prestasi untuk mengedit.</p>
             </div>
         </div>
 
@@ -84,11 +84,28 @@
                             <td class="px-6 py-4 align-top">
                                 <div v-if="getPrestasiBySiswa(siswa.id).length > 0" class="flex flex-wrap gap-2">
                                     <div v-for="p in getPrestasiBySiswa(siswa.id)" :key="p.id" 
-                                         class="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-800 px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm group">
-                                        <TrophyIcon class="w-3 h-3 text-yellow-600" />
-                                        <span>{{ p.judul_prestasi }} ({{ p.tingkat }})</span>
-                                        <button @click="removePrestasi(p.id)" class="text-red-400 hover:text-red-600 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <TrashIcon class="w-3 h-3" />
+                                         class="inline-flex items-center gap-1 bg-yellow-50 border border-yellow-200 text-yellow-800 pl-3 pr-2 py-1.5 rounded-lg text-xs font-medium shadow-sm group hover:border-yellow-400 transition-colors">
+                                        
+                                        <TrophyIcon class="w-3.5 h-3.5 text-yellow-600 mr-1" />
+                                        <span>{{ p.judul_prestasi }}</span>
+                                        <span class="text-yellow-600 bg-yellow-100 px-1 rounded mx-1">{{ p.tingkat }}</span>
+
+                                        <span class="border-l border-yellow-300 h-4 mx-1"></span>
+
+                                        <button 
+                                          @click="openEditModal(p, siswa)" 
+                                          title="Edit Prestasi"
+                                          class="p-1 hover:bg-yellow-200 rounded text-yellow-700 hover:text-yellow-900 transition-colors"
+                                        >
+                                            <PencilIcon class="w-3.5 h-3.5" />
+                                        </button>
+
+                                        <button 
+                                          @click="removePrestasi(p.id)" 
+                                          title="Hapus Prestasi"
+                                          class="p-1 hover:bg-red-100 rounded text-red-400 hover:text-red-600 transition-colors"
+                                        >
+                                            <TrashIcon class="w-3.5 h-3.5" />
                                         </button>
                                     </div>
                                 </div>
@@ -117,7 +134,9 @@
         <div class="bg-white w-full max-w-md rounded-xl shadow-2xl p-6 relative">
             <button @click="closeModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><XMarkIcon class="w-6 h-6" /></button>
             
-            <h3 class="text-xl font-bold text-gray-800 mb-1">Tambah Prestasi</h3>
+            <h3 class="text-xl font-bold text-gray-800 mb-1">
+                {{ isEdit ? 'Edit Prestasi' : 'Tambah Prestasi' }}
+            </h3>
             <p class="text-sm text-gray-500 mb-6">Siswa: <span class="font-bold text-[#0057A8]">{{ form.nama_siswa }}</span></p>
 
             <div class="space-y-4">
@@ -145,8 +164,11 @@
                 </div>
             </div>
 
-            <button @click="savePrestasi" class="w-full mt-6 bg-[#0057A8] hover:bg-blue-800 text-white py-2.5 rounded-lg font-bold transition-all">
-                Simpan Prestasi
+            <button 
+                @click="savePrestasi" 
+                class="w-full mt-6 bg-[#0057A8] hover:bg-blue-800 text-white py-2.5 rounded-lg font-bold transition-all"
+            >
+                {{ isEdit ? 'Simpan Perubahan' : 'Simpan Prestasi' }}
             </button>
         </div>
     </div>
@@ -159,12 +181,23 @@
 import axios from "axios";
 import Toast from "@/components/Toast.vue";
 import Avatar from "@/components/Avatar.vue";
-import { HomeIcon, ClipboardDocumentListIcon, TrophyIcon, ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, PlusIcon, TrashIcon, BookOpenIcon } from "@heroicons/vue/24/solid";
+import { 
+    HomeIcon, 
+    ClipboardDocumentListIcon, 
+    TrophyIcon, 
+    ArrowLeftOnRectangleIcon, 
+    Bars3Icon, 
+    XMarkIcon, 
+    PlusIcon, 
+    TrashIcon, 
+    PencilIcon, // Jangan lupa import PencilIcon
+    BookOpenIcon 
+} from "@heroicons/vue/24/solid";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 export default {
-  components: { Toast, Avatar, HomeIcon, ClipboardDocumentListIcon, TrophyIcon, ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, PlusIcon, TrashIcon, BookOpenIcon },
+  components: { Toast, Avatar, HomeIcon, ClipboardDocumentListIcon, TrophyIcon, ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, PlusIcon, TrashIcon, PencilIcon, BookOpenIcon },
   data() {
     return {
       openSidebar: false,
@@ -174,7 +207,9 @@ export default {
       prestasiList: [],
       
       showModal: false,
+      isEdit: false, // Penanda mode Edit/Tambah
       form: {
+          id: null,
           siswa_id: null,
           nama_siswa: '',
           judul_prestasi: '',
@@ -189,12 +224,12 @@ export default {
     async getData() {
       const auth = this.getAuth();
       try {
-        // Ambil Data Siswa (Sudah difilter Wali Kelas dari backend)
-        const siswaRes = await axios.get(`${BASE_URL}/api/siswa`, auth);
+        const [siswaRes, prestasiRes] = await Promise.all([
+             axios.get(`${BASE_URL}/api/siswa`, auth),
+             axios.get(`${BASE_URL}/api/prestasi`, auth)
+        ]);
+        
         this.siswaList = siswaRes.data;
-
-        // Ambil Data Prestasi
-        const prestasiRes = await axios.get(`${BASE_URL}/api/prestasi`, auth);
         this.prestasiList = prestasiRes.data;
 
       } catch (e) {
@@ -203,18 +238,34 @@ export default {
       }
     },
 
-    // Helper: Cari prestasi milik siswa tertentu
     getPrestasiBySiswa(siswaId) {
         return this.prestasiList.filter(p => p.siswa_id === siswaId);
     },
 
+    // 1. Mode Tambah
     openAddModal(siswa) {
+        this.isEdit = false;
         this.form = {
+            id: null,
             siswa_id: siswa.id,
-            nama_siswa: siswa.nama, // Untuk display di modal
+            nama_siswa: siswa.nama,
             judul_prestasi: '',
             tingkat: 'Sekolah',
             tahun: new Date().getFullYear()
+        };
+        this.showModal = true;
+    },
+
+    // 2. Mode Edit
+    openEditModal(prestasi, siswa) {
+        this.isEdit = true;
+        this.form = {
+            id: prestasi.id, // Simpan ID untuk keperluan UPDATE
+            siswa_id: siswa.id,
+            nama_siswa: siswa.nama,
+            judul_prestasi: prestasi.judul_prestasi,
+            tingkat: prestasi.tingkat,
+            tahun: prestasi.tahun
         };
         this.showModal = true;
     },
@@ -227,10 +278,18 @@ export default {
         if(!this.form.judul_prestasi) return this.$refs.toast.show("Judul prestasi wajib diisi", "error");
         
         try {
-            await axios.post(`${BASE_URL}/api/prestasi`, this.form, this.getAuth());
-            this.$refs.toast.show("Berhasil ditambahkan", "success");
+            if (this.isEdit) {
+                // UPDATE PRESTASI
+                await axios.put(`${BASE_URL}/api/prestasi/${this.form.id}`, this.form, this.getAuth());
+                this.$refs.toast.show("Berhasil diperbarui", "success");
+            } else {
+                // CREATE PRESTASI
+                await axios.post(`${BASE_URL}/api/prestasi`, this.form, this.getAuth());
+                this.$refs.toast.show("Berhasil ditambahkan", "success");
+            }
+            
             this.closeModal();
-            this.getData(); // Refresh data
+            this.getData(); // Refresh tampilan
         } catch(e) {
             console.error(e);
             this.$refs.toast.show("Gagal menyimpan", "error");
