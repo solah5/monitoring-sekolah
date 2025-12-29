@@ -13,7 +13,7 @@ const nilaiRoutes = require("./routes/nilai");
 const prestasiRoutes = require("./routes/prestasi");
 const bkRoutes = require("./routes/bk");
 const siswaAreaRoutes = require("./routes/siswa_area");
-const dashboardRoutes = require("../routes/dashboard");
+const dashboardRoutes = require("./routes/dashboard");
 
 const app = express();
 app.use(cors());
