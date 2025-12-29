@@ -76,7 +76,7 @@
           </button>
           <div class="hidden md:block">
             <h1 class="text-lg font-semibold text-gray-700">
-              Input Nilai Siswa
+              Input Nilai Siswa (Wali Kelas)
             </h1>
           </div>
           <div class="flex items-center gap-3">
@@ -88,177 +88,91 @@
       </header>
 
       <main class="flex-1 p-4 md:p-8">
-        <div
-          class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6"
-        >
-          <button
-            @click="openForm"
-            class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2"
+        
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
+          <label class="block text-gray-700 font-semibold mb-2">Pilih Mata Pelajaran:</label>
+          <select 
+            v-model="selectedMapelId" 
+            @change="resetInput"
+            class="w-full md:w-1/2 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
           >
-            <PlusIcon class="w-5 h-5" /><span>Input Nilai</span>
-          </button>
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Cari siswa atau mapel..."
-            class="w-full md:w-64 pl-4 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          />
+            <option disabled value="">-- Pilih Mapel --</option>
+            <option v-for="mapel in mapelList" :key="mapel.id" :value="mapel.id">
+              {{ mapel.nama_mapel }}
+            </option>
+          </select>
+          <p class="text-sm text-gray-500 mt-2">*Pilih mapel untuk menampilkan daftar siswa kelas binaan Anda.</p>
         </div>
 
-        <div
-          class="bg-white rounded-xl shadow-md border border-gray-200 overflow-x-auto"
-        >
-          <table class="w-full text-left min-w-full">
-            <thead class="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600">
-                  Nama Siswa
-                </th>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600">
-                  Mata Pelajaran
-                </th>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600">
-                  Jenis
-                </th>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600">
-                  Nilai
-                </th>
-                <th
-                  class="py-3 px-5 text-sm font-semibold text-gray-600 text-center"
+        <div v-if="selectedMapelId" class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+          <div class="p-4 bg-blue-50 border-b border-blue-100 flex justify-between items-center">
+            <span class="text-blue-800 font-bold">Daftar Siswa</span>
+            <span class="text-sm text-gray-600 bg-white px-3 py-1 rounded border">Semester: Ganjil</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th class="py-3 px-5 text-sm font-semibold text-gray-600 w-16">No</th>
+                  <th class="py-3 px-5 text-sm font-semibold text-gray-600">NIS</th>
+                  <th class="py-3 px-5 text-sm font-semibold text-gray-600">Nama Siswa</th>
+                  <th class="py-3 px-5 text-sm font-semibold text-gray-600 w-40">Nilai (0-100)</th>
+                  <th class="py-3 px-5 text-sm font-semibold text-gray-600 text-center w-32">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="siswaList.length === 0">
+                  <td colspan="5" class="p-8 text-center text-gray-500">
+                    Tidak ada siswa di kelas binaan Anda.
+                  </td>
+                </tr>
+                <tr
+                  v-for="(siswa, index) in siswaList"
+                  :key="siswa.id"
+                  class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                 >
-                  Aksi
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="paginatedData.length === 0">
-                <td colspan="5" class="py-6 text-center text-gray-500">
-                  Belum ada data nilai.
-                </td>
-              </tr>
-              <tr
-                v-for="item in paginatedData"
-                :key="item.id"
-                class="border-b border-gray-100 hover:bg-gray-50"
-              >
-                <td class="py-3 px-5 text-sm text-gray-700">
-                  {{ item.nama_siswa }}
-                </td>
-                <td class="py-3 px-5 text-sm text-gray-700">
-                  {{ item.nama_mapel }}
-                </td>
-                <td class="py-3 px-5 text-sm text-gray-700">
-                  <span
-                    class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold"
-                    >{{ item.jenis_nilai }}</span
-                  >
-                </td>
-                <td class="py-3 px-5 text-sm font-bold text-gray-900">
-                  {{ item.nilai }}
-                </td>
-                <td class="py-3 px-5 text-sm text-center">
-                  <button
-                    @click="edit(item)"
-                    class="text-yellow-600 hover:text-yellow-700 p-1 mx-1"
-                  >
-                    <PencilIcon class="w-5 h-5" />
-                  </button>
-                  <button
-                    @click="remove(item.id)"
-                    class="text-red-600 hover:text-red-700 p-1 mx-1"
-                  >
-                    <TrashIcon class="w-5 h-5" />
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  <td class="py-3 px-5 text-sm text-gray-700">{{ index + 1 }}</td>
+                  <td class="py-3 px-5 text-sm text-gray-600 font-mono">{{ siswa.nis }}</td>
+                  <td class="py-3 px-5 text-sm font-medium text-gray-800">{{ siswa.nama }}</td>
+                  
+                  <td class="py-3 px-5">
+                    <input 
+                      type="number" 
+                      v-model="inputNilai[siswa.id]" 
+                      min="0" max="100"
+                      placeholder="0"
+                      class="w-full border border-gray-300 rounded px-3 py-1.5 text-center focus:ring-2 focus:ring-blue-500 outline-none transition-shadow"
+                    />
+                  </td>
+
+                  <td class="py-3 px-5 text-center">
+                    <button 
+                      @click="simpanNilai(siswa.id)"
+                      :disabled="loadingId === siswa.id"
+                      class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-md text-sm transition-colors disabled:bg-blue-300 flex items-center justify-center w-full"
+                    >
+                      <span v-if="loadingId === siswa.id">...</span>
+                      <span v-else>Simpan</span>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        <div v-else class="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-dashed border-gray-300 text-center">
+          <div class="bg-gray-100 p-4 rounded-full mb-3">
+            <ClipboardDocumentListIcon class="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 class="text-gray-900 font-medium">Belum memilih Mata Pelajaran</h3>
+          <p class="text-gray-500 text-sm mt-1">Silakan pilih mapel di atas untuk mulai menginput nilai.</p>
+        </div>
+
       </main>
     </div>
-
-    <div
-      v-if="showForm"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4"
-      @click.self="closeForm"
-    >
-      <div
-        class="bg-white w-full max-w-md p-6 rounded-xl shadow-xl relative h-auto max-h-[90vh] overflow-visible"
-      >
-        <button
-          @click="closeForm"
-          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-        >
-          <XMarkIcon class="w-6 h-6" />
-        </button>
-        <h3 class="text-lg font-bold mb-5 text-gray-800">
-          {{ isEdit ? "Edit Nilai" : "Input Nilai" }}
-        </h3>
-
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1"
-              >Siswa</label
-            >
-            <SearchableSelect
-              :options="siswaOptions"
-              v-model="form.siswa_nama"
-              @selected="(opt) => (form.siswa_id = opt.originalId)"
-              placeholder="Cari siswa..."
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1"
-              >Mata Pelajaran</label
-            >
-            <SearchableSelect
-              :options="mapelOptions"
-              v-model="form.nama_mapel_display"
-              @selected="(opt) => (form.mapel_id = opt.originalId)"
-              placeholder="Cari mata pelajaran..."
-            />
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-600 mb-1"
-                >Jenis Nilai</label
-              >
-              <select
-                v-model="form.jenis_nilai"
-                class="border border-gray-300 p-2 w-full rounded-lg bg-white"
-              >
-                <option value="UH1">UH1</option>
-                <option value="UH2">UH2</option>
-                <option value="UH3">UH3</option>
-                <option value="PTS">PTS</option>
-                <option value="PAS">PAS</option>
-                <option value="Tugas">Tugas</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-600 mb-1"
-                >Nilai (0-100)</label
-              >
-              <input
-                v-model="form.nilai"
-                type="number"
-                min="0"
-                max="100"
-                class="border border-gray-300 p-2 w-full rounded-lg"
-              />
-            </div>
-          </div>
-        </div>
-        <button
-          @click="save"
-          class="bg-blue-600 text-white w-full py-2.5 rounded-lg mt-6 text-sm font-medium hover:bg-blue-700"
-        >
-          Simpan
-        </button>
-      </div>
-    </div>
+    
     <Toast ref="toast" />
   </div>
 </template>
@@ -267,7 +181,6 @@
 import axios from "axios";
 import Toast from "@/components/Toast.vue";
 import Avatar from "@/components/Avatar.vue";
-import SearchableSelect from "@/components/SearchableSelect.vue";
 import {
   HomeIcon,
   ClipboardDocumentListIcon,
@@ -275,85 +188,37 @@ import {
   ArrowLeftOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
   BookOpenIcon,
 } from "@heroicons/vue/24/solid";
 
-// Gunakan BASE_URL dari environment variable
 const BASE_URL = import.meta.env.VITE_API_URL;
-const API_URL = `${BASE_URL}/api/nilai`;
 
 export default {
   components: {
     Toast,
     Avatar,
-    SearchableSelect,
     HomeIcon,
     ClipboardDocumentListIcon,
     TrophyIcon,
     ArrowLeftOnRectangleIcon,
     Bars3Icon,
     XMarkIcon,
-    PlusIcon,
-    PencilIcon,
-    TrashIcon,
     BookOpenIcon,
   },
   data() {
     return {
       openSidebar: false,
       user: JSON.parse(localStorage.getItem("user")),
-      nilaiList: [],
-      siswaList: [],
+      
+      // Data untuk Bulk Input
       mapelList: [],
-      searchQuery: "",
-      currentPage: 1,
-      itemsPerPage: 10,
-      showForm: false,
-      isEdit: false,
-      form: {
-        id: null,
-        siswa_id: null,
-        siswa_nama: "", // v-model untuk SearchableSelect Siswa
-        mapel_id: null,
-        nama_mapel_display: "", // v-model untuk SearchableSelect Mapel
-        jenis_nilai: "UH1",
-        nilai: 0,
-      },
+      siswaList: [],
+      selectedMapelId: "",
+      
+      // Menyimpan nilai yang diketik: { id_siswa: nilai }
+      inputNilai: {}, 
+      loadingId: null, // Untuk efek loading tombol simpan
     };
-  },
-  computed: {
-    // Format data siswa untuk SearchableSelect
-    siswaOptions() {
-      return this.siswaList.map((s) => ({
-        label: `${s.nama} (${s.kelas})`,
-        value: s.nama,
-        originalId: s.id,
-      }));
-    },
-    // Format data mapel untuk SearchableSelect
-    mapelOptions() {
-      return this.mapelList.map((m) => ({
-        label: m.nama_mapel,
-        value: m.nama_mapel,
-        originalId: m.id,
-      }));
-    },
-    filteredData() {
-      if (!this.searchQuery) return this.nilaiList;
-      const q = this.searchQuery.toLowerCase();
-      return this.nilaiList.filter(
-        (i) =>
-          i.nama_siswa.toLowerCase().includes(q) ||
-          i.nama_mapel.toLowerCase().includes(q)
-      );
-    },
-    paginatedData() {
-      // Logic pagination sederhana (bisa dikembangkan)
-      return this.filteredData;
-    },
   },
   methods: {
     getAuth() {
@@ -361,75 +226,70 @@ export default {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       };
     },
+    
+    // 1. Ambil Data Mapel & Siswa saat halaman dimuat
     async getData() {
       const auth = this.getAuth();
       try {
-        // Gunakan BASE_URL di sini juga
-        const [nilaiRes, siswaRes, mapelRes] = await Promise.all([
-          axios.get(API_URL, auth),
+        const [siswaRes, mapelRes] = await Promise.all([
           axios.get(`${BASE_URL}/api/siswa`, auth),
           axios.get(`${BASE_URL}/api/mapel`, auth),
         ]);
-        this.nilaiList = nilaiRes.data;
+        
+        // Backend sudah otomatis memfilter siswa berdasarkan Wali Kelas
         this.siswaList = siswaRes.data;
         this.mapelList = mapelRes.data;
+        
       } catch (e) {
         console.error(e);
-        if (e.response?.status === 403)
-          this.$refs.toast.show("Akses ditolak! Cek backend.", "error");
-        else if (e.response?.status === 401) this.logout();
+        if (e.response?.status === 401) this.logout();
+        else this.$refs.toast.show("Gagal memuat data", "error");
       }
     },
-    openForm() {
-      this.form = {
-        id: null,
-        siswa_id: null,
-        siswa_nama: "",
-        mapel_id: null,
-        nama_mapel_display: "",
-        jenis_nilai: "UH1",
-        nilai: 0,
-      };
-      this.isEdit = false;
-      this.showForm = true;
+
+    resetInput() {
+        // Reset input nilai jika ganti mapel (opsional)
+        // this.inputNilai = {};
     },
-    edit(item) {
-      this.form = {
-        ...item,
-        siswa_nama: item.nama_siswa, // Pre-fill nama siswa
-        nama_mapel_display: item.nama_mapel, // Pre-fill nama mapel
-      };
-      this.isEdit = true;
-      this.showForm = true;
-    },
-    closeForm() {
-      this.showForm = false;
-    },
-    async save() {
-      if (!this.form.siswa_id || !this.form.mapel_id) {
-        this.$refs.toast.show("Lengkapi data!", "error");
+
+    // 2. Fungsi Simpan Nilai (Per Siswa)
+    async simpanNilai(siswaId) {
+      const nilai = this.inputNilai[siswaId];
+
+      // Validasi sederhana
+      if (!this.selectedMapelId) {
+        this.$refs.toast.show("Pilih Mapel dulu!", "error");
         return;
       }
+      if (nilai === undefined || nilai === "" || nilai === null) {
+        this.$refs.toast.show("Nilai tidak boleh kosong", "error");
+        return;
+      }
+
+      this.loadingId = siswaId; // Efek loading nyala
+
       try {
-        if (this.isEdit)
-          await axios.put(
-            `${API_URL}/${this.form.id}`,
-            this.form,
-            this.getAuth()
-          );
-        else await axios.post(API_URL, this.form, this.getAuth());
-        this.showForm = false;
-        this.getData();
-        this.$refs.toast.show("Berhasil!", "success");
+        await axios.post(
+          `${BASE_URL}/api/nilai`,
+          {
+            siswa_id: siswaId,
+            mapel_id: this.selectedMapelId,
+            nilai_pengetahuan: nilai,
+            semester: 'Ganjil', // Default semester
+            jenis_nilai: 'PAS'  // Atau bisa dibuat dropdown juga
+          },
+          this.getAuth()
+        );
+
+        this.$refs.toast.show("Nilai tersimpan!", "success");
       } catch (e) {
-        this.$refs.toast.show("Error!", "error");
+        console.error(e);
+        this.$refs.toast.show("Gagal menyimpan", "error");
+      } finally {
+        this.loadingId = null; // Efek loading mati
       }
     },
-    async remove(id) {
-      if (!confirm("Hapus?")) return;
-      await axios.delete(`${API_URL}/${id}`, this.getAuth());
-      this.getData();
-    },
+
     logout() {
       localStorage.clear();
       this.$router.push("/");
