@@ -13,6 +13,7 @@ const nilaiRoutes = require("./routes/nilai");
 const prestasiRoutes = require("./routes/prestasi");
 const bkRoutes = require("./routes/bk");
 const siswaAreaRoutes = require("./routes/siswa_area");
+const dashboardRoutes = require("../routes/dashboard");
 
 const app = express();
 app.use(cors());
@@ -33,6 +34,7 @@ app.use("/api/nilai", nilaiRoutes);
 app.use("/api/prestasi", prestasiRoutes);
 app.use("/api/bk", bkRoutes);
 app.use("/api/siswa-area", siswaAreaRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // const PORT = process.env.PORT || 5000;
 // app.listen(PORT, () => console.log(`Server running on ${PORT}`));
