@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex font-sans">
+  <div class="min-h-screen bg-gray-50 flex">
     
     <aside
       :class="[
@@ -13,7 +13,6 @@
         class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
         @click="openSidebar = false"
       ></div>
-
       <div class="relative z-50 bg-[#0057A8] h-full flex flex-col">
         <button
           @click="openSidebar = false"
@@ -21,84 +20,74 @@
         >
           <XMarkIcon class="w-7 h-7" />
         </button>
-
         <div class="flex flex-col items-center mt-8 gap-3 px-2 text-center">
-          <img src="/logo-sma.png" class="w-20 drop-shadow-md" />
-          <h1 class="text-base font-bold leading-tight tracking-wide">
+          <img src="/logo-sma.png" class="w-20" />
+          <h1 class="text-base font-semibold leading-tight">
             SMA Negeri 1<br />Gunung Sindur
           </h1>
         </div>
-
         <nav class="flex-1 w-full mt-10 px-4">
           <ul class="space-y-3">
             <li>
               <router-link to="/guru" class="nav-link">
-                <HomeIcon class="w-5 h-5" />
-                <span>Dashboard</span>
+                <HomeIcon class="w-5 h-5" /><span>Dashboard</span>
               </router-link>
             </li>
-            
             <li>
               <router-link to="/guru/nilai" class="nav-link nav-link-active">
-                <ClipboardDocumentListIcon class="w-5 h-5" />
-                <span>Input Nilai</span>
+                <ClipboardDocumentListIcon class="w-5 h-5" /><span>Input Nilai</span>
               </router-link>
             </li>
-            
             <li>
               <router-link to="/guru/prestasi" class="nav-link">
-                <TrophyIcon class="w-5 h-5" />
-                <span>Prestasi Siswa</span>
+                <TrophyIcon class="w-5 h-5" /><span>Prestasi Siswa</span>
               </router-link>
             </li>
-            
             <li>
               <router-link to="/guru/mapel" class="nav-link">
-                <BookOpenIcon class="w-5 h-5" />
-                <span>Kelola Mapel</span>
+                <BookOpenIcon class="w-5 h-5" /><span>Kelola Mapel</span>
               </router-link>
             </li>
           </ul>
         </nav>
-
-        <div class="p-4 mt-auto mb-4">
+        <div class="p-4 mt-auto">
           <button
             @click="logout"
-            class="w-full bg-red-500 py-2.5 px-4 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors flex items-center justify-center gap-2 shadow-sm"
+            class="w-full bg-red-500 py-2.5 px-4 rounded-lg text-sm hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
           >
-            <ArrowLeftOnRectangleIcon class="w-5 h-5" />
-            <span>Logout</span>
+            <ArrowLeftOnRectangleIcon class="w-5 h-5" /><span>Logout</span>
           </button>
         </div>
       </div>
     </aside>
 
-    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto">
       
-      <header class="sticky top-0 bg-white border-b border-gray-200 z-30 shadow-sm">
+      <header class="sticky top-0 bg-white border-b border-gray-200 z-30">
         <div class="px-4 md:px-8 h-16 flex items-center justify-between">
-          <button @click="openSidebar = true" class="md:hidden p-1 text-gray-700 hover:bg-gray-100 rounded">
+          <button
+            @click="openSidebar = true"
+            class="md:hidden p-1 text-gray-700"
+          >
             <Bars3Icon class="w-7 h-7" />
           </button>
-          
           <div class="hidden md:block">
-            <h1 class="text-lg font-bold text-gray-800">Input Nilai Siswa (Wali Kelas)</h1>
+            <h1 class="text-lg font-semibold text-gray-700">
+              Input Nilai Siswa
+            </h1>
           </div>
-          
           <div class="flex items-center gap-3">
-            <div class="text-right hidden sm:block leading-tight">
-              <span class="text-gray-600 text-sm block">Halo,</span>
-              <span class="text-gray-900 font-bold text-sm">{{ user?.name }}</span>
-            </div>
-            <Avatar :name="user?.name" class="border-2 border-gray-100 shadow-sm" />
+            <span class="text-gray-600 text-sm hidden md:block"
+              >Halo, <b>{{ user?.name }}</b></span
+            ><Avatar :name="user?.name" />
           </div>
         </div>
       </header>
 
-      <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+      <main class="flex-1 p-4 md:p-8">
         
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
-          <label class="block text-gray-700 font-bold mb-2">Pilih Mata Pelajaran:</label>
+          <label class="block text-gray-700 font-semibold mb-2">Pilih Mata Pelajaran:</label>
           <div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
             <select 
               v-model="selectedMapelId" 
@@ -110,16 +99,13 @@
                 {{ mapel.nama_mapel }}
               </option>
             </select>
-            <span class="text-sm text-gray-500 italic bg-blue-50 px-3 py-1 rounded-md text-blue-700">
-              *Pilih mapel untuk menampilkan siswa
-            </span>
           </div>
         </div>
 
         <div v-if="selectedMapelId" class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-          <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex flex-wrap justify-between items-center gap-2">
+          <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
             <div>
-               <h3 class="font-bold text-gray-800 text-lg">Input Nilai</h3>
+               <h3 class="font-bold text-gray-800 text-lg">Daftar Nilai</h3>
                <p class="text-sm text-gray-500">{{ getNamaMapel() }}</p>
             </div>
             <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full border border-green-200">
@@ -194,12 +180,12 @@
             <BookOpenIcon class="w-12 h-12 text-[#0057A8]" />
           </div>
           <h3 class="text-xl font-bold text-gray-800">Mulai Input Nilai</h3>
-          <p class="text-gray-500 mt-2 max-w-sm text-center">Silakan pilih mata pelajaran di bagian atas untuk menampilkan daftar siswa dan mulai mengisi nilai.</p>
+          <p class="text-gray-500 mt-2 max-w-sm text-center">Silakan pilih mata pelajaran di bagian atas untuk menampilkan daftar siswa.</p>
         </div>
 
       </main>
     </div>
-
+    
     <Toast ref="toast" />
   </div>
 </template>
@@ -208,51 +194,63 @@
 import axios from "axios";
 import Toast from "@/components/Toast.vue";
 import Avatar from "@/components/Avatar.vue";
-import { 
-  HomeIcon, 
-  ClipboardDocumentListIcon, 
-  TrophyIcon, 
-  ArrowLeftOnRectangleIcon, 
-  Bars3Icon, 
-  XMarkIcon, 
-  BookOpenIcon 
+import {
+  HomeIcon,
+  ClipboardDocumentListIcon,
+  TrophyIcon,
+  ArrowLeftOnRectangleIcon,
+  Bars3Icon,
+  XMarkIcon,
+  BookOpenIcon,
 } from "@heroicons/vue/24/solid";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 export default {
-  components: { Toast, Avatar, HomeIcon, ClipboardDocumentListIcon, TrophyIcon, ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, BookOpenIcon },
+  components: {
+    Toast,
+    Avatar,
+    HomeIcon,
+    ClipboardDocumentListIcon,
+    TrophyIcon,
+    ArrowLeftOnRectangleIcon,
+    Bars3Icon,
+    XMarkIcon,
+    BookOpenIcon,
+  },
   data() {
     return {
       openSidebar: false,
       user: JSON.parse(localStorage.getItem("user")),
+      
+      // Data Logic Baru
       mapelList: [],
       siswaList: [],
       selectedMapelId: "",
-      
-      // Struktur Data Input: { id_siswa: { tugas: 0, uts: 0, uas: 0 } }
       inputNilai: {}, 
       loadingId: null,
     };
   },
   methods: {
-    getAuth() { return { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }; },
+    getAuth() {
+      return {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      };
+    },
     
     async getData() {
       const auth = this.getAuth();
       try {
         const [siswaRes, mapelRes] = await Promise.all([
-          axios.get(`${BASE_URL}/api/siswa`, auth), // Sudah difilter wali kelas oleh backend
+          axios.get(`${BASE_URL}/api/siswa`, auth),
           axios.get(`${BASE_URL}/api/mapel`, auth),
         ]);
         
         this.siswaList = siswaRes.data;
         this.mapelList = mapelRes.data;
 
-        // Inisialisasi object inputNilai agar tidak error saat render
+        // Inisialisasi Data agar tidak error
         this.siswaList.forEach(s => {
-          // Backend mengirim kolom: tugas, uts, uas (jika ada nilai, jika tidak null)
-          // Kita pastikan nilainya angka atau string kosong
           this.inputNilai[s.id] = { 
             tugas: s.tugas !== null ? s.tugas : '', 
             uts: s.uts !== null ? s.uts : '', 
@@ -266,17 +264,10 @@ export default {
       }
     },
 
-    // Dipanggil saat dropdown mapel berubah
-    async fetchNilaiExisting() {
-       // Idealnya fetch data nilai khusus mapel ini.
-       // Untuk sementara kita reload data dasar agar form input ter-reset atau terisi data terbaru dari state lokal
-       // Di production, logic ini harus memanggil endpoint: GET /api/nilai?mapel_id=...
-       
-       // Simulasi reset jika data belum ada di backend
-       /* this.siswaList.forEach(s => {
-          this.inputNilai[s.id] = { tugas: '', uts: '', uas: '' };
-       });
-       */
+    fetchNilaiExisting() {
+       // Logic reset atau fetch ulang nilai jika ganti mapel
+       // Sementara reset form dulu (atau ambil nilai lama jika backend support)
+       // this.getData(); // Bisa dipanggil ulang untuk refresh
     },
 
     getNamaMapel() {
@@ -292,11 +283,9 @@ export default {
         const u1 = Number(val.uts) || 0;
         const u2 = Number(val.uas) || 0;
         
-        // Jika semua kosong, tampilkan strip
         if(val.tugas === '' && val.uts === '' && val.uas === '') return "-";
         
-        // Rumus Rata-rata
-        return ((t + u1 + u2) / 3).toFixed(0); // Dibulatkan tanpa koma agar rapi
+        return ((t + u1 + u2) / 3).toFixed(0);
     },
 
     async simpanNilai(siswaId) {
@@ -324,25 +313,23 @@ export default {
       }
     },
 
-    logout() { localStorage.clear(); this.$router.push("/"); },
+    logout() {
+      localStorage.clear();
+      this.$router.push("/");
+    },
   },
-  mounted() { this.getData(); },
+  mounted() {
+    this.getData();
+  },
 };
 </script>
 
 <style scoped>
-/* GAYA CSS ORIGINAL ANDA */
+/* CSS ORIGINAL ANDA - AGAR TAMPILAN KEMBALI SEPERTI SEMULA */
 .nav-link {
-  @apply flex items-center gap-3 py-3 px-4 rounded-lg text-blue-100 hover:bg-blue-800 hover:text-white transition-all duration-200 font-medium;
+  @apply flex items-center gap-3 py-2.5 px-4 rounded-lg text-gray-200 hover:bg-blue-800 hover:text-white transition-colors;
 }
-
-/* Style Aktif: Background Putih, Teks Biru, Shadow */
 .nav-link-active {
-  @apply bg-white text-[#0057A8] font-bold shadow-md;
-}
-
-/* Pastikan icon mengikuti warna teks parent */
-.nav-link svg {
-  @apply transition-colors duration-200;
+  @apply bg-white text-[#0057A8] font-semibold shadow;
 }
 </style>
