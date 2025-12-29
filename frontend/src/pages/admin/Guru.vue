@@ -131,26 +131,42 @@
           <table class="w-full text-left min-w-full">
             <thead class="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">Nama</th>
+                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap w-12">No</th>
                 <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">NIP</th>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">Mapel</th>
+                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">Nama Guru</th>
+                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">Jabatan</th>
+                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">Wali Kelas</th>
                 <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap text-center">Aksi</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="paginatedData.length === 0">
-                <td colspan="4" class="py-6 text-center text-gray-500">
+                <td colspan="6" class="py-6 text-center text-gray-500">
                   {{ searchQuery ? 'Data tidak ditemukan.' : 'Memuat data...' }}
                 </td>
               </tr>
               <tr
-                v-for="item in paginatedData"
+                v-for="(item, index) in paginatedData"
                 :key="item.id"
                 class="border-b border-gray-100 hover:bg-gray-50"
               >
-                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">{{ item.nama }}</td>
-                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap font-mono">{{ item.nip }}</td>
-                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">{{ item.nama_mapel || "-" }}</td>
+                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">
+                  {{ (currentPage - 1) * itemsPerPage + index + 1 }}
+                </td>
+                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap font-mono">
+                  {{ item.nip }}
+                </td>
+                <td class="py-3 px-5 text-sm text-gray-700 font-bold whitespace-nowrap">
+                  {{ item.nama }}
+                </td>
+                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">
+                  <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-medium">
+                    {{ item.jabatan }}
+                  </span>
+                </td>
+                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">
+                  {{ item.wali_kelas || "-" }}
+                </td>
                 <td class="py-3 px-5 text-sm text-center whitespace-nowrap">
                   <button
                     @click="edit(item)"
@@ -215,17 +231,6 @@
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Nama</label>
-            <input
-              v-model="form.nama"
-              placeholder="Masukkan nama lengkap"
-              class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p v-if="errors.nama" class="text-red-600 text-sm mt-1">
-              {{ errors.nama }}
-            </p>
-          </div>
-          <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">NIP</label>
             <input
               v-model="form.nip"
@@ -236,21 +241,44 @@
               {{ errors.nip }}
             </p>
           </div>
+
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Mata Pelajaran (Opsional)</label>
-            <select
-              v-model="form.mapel_id"
-              class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            <label class="block text-sm font-medium text-gray-600 mb-1">Nama Lengkap</label>
+            <input
+              v-model="form.nama"
+              placeholder="Masukkan nama lengkap"
+              class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p v-if="errors.nama" class="text-red-600 text-sm mt-1">
+              {{ errors.nama }}
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">Jabatan</label>
+            <select 
+                v-model="form.jabatan" 
+                class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
-              <option :value="null">-- Pilih Mata Pelajaran --</option>
-              <option
-                v-for="mapel in mapelList"
-                :key="mapel.id"
-                :value="mapel.id"
-              >
-                {{ mapel.nama_mapel }}
-              </option>
+                <option disabled value="">-- Pilih Jabatan --</option>
+                <option value="Guru Mapel">Guru Mapel</option>
+                <option value="Kepala Sekolah">Kepala Sekolah</option>
+                <option value="Wakil Kepala Sekolah">Wakil Kepala Sekolah</option>
+                <option value="Guru BK">Guru BK</option>
+                <option value="Staf TU">Staf TU</option>
             </select>
+            <p v-if="errors.jabatan" class="text-red-600 text-sm mt-1">
+              {{ errors.jabatan }}
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">Wali Kelas (Opsional)</label>
+            <input
+              v-model="form.wali_kelas"
+              placeholder="Contoh: X-1, XII-IPA-2 (Kosongkan jika bukan)"
+              class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
 
@@ -312,7 +340,6 @@ export default {
       openSidebar: false,
       user: JSON.parse(localStorage.getItem("user")),
       guru: [],
-      mapelList: [],
       
       // Filter & Pagination
       searchQuery: "",
@@ -322,8 +349,9 @@ export default {
       // Modal State
       showForm: false,
       isEdit: false,
-      form: { id: null, nama: "", nip: "", mapel_id: null },
-      errors: { nama: "", nip: "", mapel_id: null },
+      // Field FORM disesuaikan: nama, nip, jabatan, wali_kelas
+      form: { id: null, nama: "", nip: "", jabatan: "", wali_kelas: "" },
+      errors: { nama: "", nip: "", jabatan: "" },
     };
   },
   computed: {
@@ -356,21 +384,16 @@ export default {
     },
     async getData() {
       try {
-        const auth = this.getAuthConfig();
-        // Mengambil data guru dan mapel untuk dropdown
-        const [guruRes, mapelRes] = await Promise.all([
-          axios.get(`${BASE_URL}/api/guru`, auth),
-          axios.get(`${BASE_URL}/api/mapel`, auth),
-        ]);
-        this.guru = guruRes.data;
-        this.mapelList = mapelRes.data;
+        const authConfig = this.getAuthConfig();
+        const { data } = await axios.get(`${BASE_URL}/api/guru`, authConfig);
+        this.guru = data;
       } catch (e) {
         this.$refs.toast.show("Gagal mengambil data", "error");
         if (e.response?.status === 401) this.logout();
       }
     },
     openForm() {
-      this.form = { id: null, nama: "", nip: "", mapel_id: null };
+      this.form = { id: null, nama: "", nip: "", jabatan: "", wali_kelas: "" };
       this.resetErrors();
       this.isEdit = false;
       this.showForm = true;
@@ -387,13 +410,16 @@ export default {
     validate() {
       let valid = true;
       this.resetErrors();
-      if (!this.form.nama) { this.errors.nama = "Nama wajib diisi"; valid = false; }
       if (!this.form.nip) { this.errors.nip = "NIP wajib diisi"; valid = false; }
       else if (!/^[0-9]+$/.test(this.form.nip)) { this.errors.nip = "NIP harus angka"; valid = false; }
+      
+      if (!this.form.nama) { this.errors.nama = "Nama wajib diisi"; valid = false; }
+      if (!this.form.jabatan) { this.errors.jabatan = "Jabatan wajib dipilih"; valid = false; }
+      
       return valid;
     },
     resetErrors() {
-      this.errors = { nama: "", nip: "", mapel_id: null };
+      this.errors = { nama: "", nip: "", jabatan: "" };
     },
     async save() {
       if (!this.validate()) {

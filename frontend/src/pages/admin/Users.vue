@@ -38,7 +38,7 @@
           </button>
           <div class="relative w-full md:w-64">
             <span class="absolute inset-y-0 left-0 flex items-center pl-3"><MagnifyingGlassIcon class="w-5 h-5 text-gray-400" /></span>
-            <input v-model="searchQuery" type="text" placeholder="Cari nama atau username..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+            <input v-model="searchQuery" type="text" placeholder="Cari username atau nama..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
           </div>
         </div>
 
@@ -46,21 +46,23 @@
           <table class="w-full text-left min-w-full">
             <thead class="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">Nama</th>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">Username</th>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">Role</th>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap text-center">Aksi</th>
+                <th class="py-3 px-5 text-sm font-semibold text-gray-600">No</th>
+                <th class="py-3 px-5 text-sm font-semibold text-gray-600">Nama</th>
+                <th class="py-3 px-5 text-sm font-semibold text-gray-600">Username</th>
+                <th class="py-3 px-5 text-sm font-semibold text-gray-600">Role</th>
+                <th class="py-3 px-5 text-sm font-semibold text-gray-600 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="paginatedData.length === 0"><td colspan="4" class="py-6 text-center text-gray-500">{{ searchQuery ? 'Data tidak ditemukan.' : 'Memuat data...' }}</td></tr>
-              <tr v-for="item in paginatedData" :key="item.id" class="border-b border-gray-100 hover:bg-gray-50">
-                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">{{ item.name }}</td>
-                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">{{ item.username }}</td>
-                <td class="py-3 px-5 text-sm text-gray-700 capitalize whitespace-nowrap">{{ item.role }}</td>
-                <td class="py-3 px-5 text-sm text-center whitespace-nowrap">
-                  <button @click="edit(item)" class="text-yellow-600 hover:text-yellow-700 p-1 mx-1" title="Edit"><PencilIcon class="w-5 h-5" /></button>
-                  <button @click="remove(item.id)" class="text-red-600 hover:text-red-700 p-1 mx-1" :disabled="item.id === user.id" :class="{ 'opacity-50 cursor-not-allowed': item.id === user.id }" title="Hapus"><TrashIcon class="w-5 h-5" /></button>
+              <tr v-if="paginatedData.length === 0"><td colspan="5" class="py-6 text-center text-gray-500">Data tidak ditemukan.</td></tr>
+              <tr v-for="(u, index) in paginatedData" :key="u.id" class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="py-3 px-5 text-sm text-gray-700">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
+                <td class="py-3 px-5 text-sm text-gray-700 font-bold">{{ u.name }}</td>
+                <td class="py-3 px-5 text-sm text-gray-700 font-mono text-blue-600">{{ u.username }}</td>
+                <td class="py-3 px-5 text-sm text-gray-700 capitalize"><span class="bg-gray-100 px-2 py-1 rounded text-xs font-bold">{{ u.role }}</span></td>
+                <td class="py-3 px-5 text-sm text-center">
+                  <button @click="edit(u)" class="text-yellow-600 hover:text-yellow-700 p-1 mx-1"><PencilIcon class="w-5 h-5" /></button>
+                  <button @click="remove(u.id)" class="text-red-600 hover:text-red-700 p-1 mx-1" :disabled="u.role === 'admin'"><TrashIcon class="w-5 h-5" /></button>
                 </td>
               </tr>
             </tbody>
@@ -70,49 +72,54 @@
         <div v-if="totalPages > 1" class="flex items-center justify-between mt-4 border-t border-gray-200 pt-4">
           <div class="text-sm text-gray-500">Halaman {{ currentPage }} dari {{ totalPages }}</div>
           <div class="flex gap-2">
-             <button @click="prevPage" :disabled="currentPage === 1" class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm">Sebelumnya</button>
-             <button @click="nextPage" :disabled="currentPage === totalPages" class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm">Selanjutnya</button>
+            <button @click="prevPage" :disabled="currentPage === 1" class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 text-sm">Sebelumnya</button>
+            <button @click="nextPage" :disabled="currentPage === totalPages" class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 text-sm">Selanjutnya</button>
           </div>
         </div>
       </main>
     </div>
 
     <div v-if="showForm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click.self="closeForm">
-      <div class="bg-white w-full max-w-md p-6 rounded-xl shadow-xl relative h-auto max-h-[90vh] overflow-visible">
+      <div class="bg-white w-full max-w-md p-6 rounded-xl shadow-xl relative">
         <button @click="closeForm" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><XMarkIcon class="w-6 h-6" /></button>
         <h3 class="text-lg font-bold mb-5 text-gray-800">{{ isEdit ? "Edit Akun" : "Tambah Akun" }}</h3>
-
+        
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Role</label>
-            <select v-model="form.role" @change="onRoleChange" class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-              <option value="admin">Admin</option>
-              <option value="guru">Guru</option>
-              <option value="bk">Guru BK</option>
-              <option value="siswa">Siswa</option>
+            <label class="block text-sm font-medium mb-1">Role</label>
+            <select v-model="form.role" @change="onRoleChange" class="border p-2 w-full rounded bg-white">
+                <option value="admin">Admin</option>
+                <option value="guru">Guru</option>
+                <option value="bk">Guru BK</option>
+                <option value="siswa">Siswa</option>
             </select>
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Nama Lengkap</label>
-            <input v-if="form.role === 'admin' || form.role === 'bk'" v-model="form.name" placeholder="Nama Lengkap" class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            
-            <SearchableSelect v-else-if="form.role === 'guru'" :options="formattedOptions.guru" v-model="form.name" @selected="onUserSelected" placeholder="Cari nama Guru..." />
-            <SearchableSelect v-else-if="form.role === 'siswa'" :options="formattedOptions.siswa" v-model="form.name" @selected="onUserSelected" placeholder="Cari nama Siswa..." />
+          <div v-if="!isEdit && (form.role === 'guru' || form.role === 'siswa')">
+             <label class="block text-sm font-medium mb-1">Pilih {{ form.role }} (Belum punya akun)</label>
+             <select v-model="selectedPerson" @change="fillData" class="border p-2 w-full rounded bg-white">
+                <option :value="null">-- Pilih Nama --</option>
+                <option v-for="p in (form.role === 'guru' ? options.guru : options.siswa)" :key="p.id" :value="p">
+                    {{ p.nama }} ({{ p.nip || p.nis }})
+                </option>
+             </select>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Username</label>
-            <input v-model="form.username" placeholder="Username (Otomatis NIP/NIS)" class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <label class="block text-sm font-medium mb-1">Nama Lengkap</label>
+            <input v-model="form.name" class="border p-2 w-full rounded focus:ring-2 focus:ring-blue-500" :readonly="!isEdit && (form.role === 'guru' || form.role === 'siswa')" />
           </div>
-
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Password</label>
-            <input v-model="form.password" type="password" :placeholder="isEdit ? 'Kosongkan jika tidak ganti' : 'Password'" class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <label class="block text-sm font-medium mb-1">Username</label>
+            <input v-model="form.username" class="border p-2 w-full rounded focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Password</label>
+            <input v-model="form.password" type="password" class="border p-2 w-full rounded focus:ring-2 focus:ring-blue-500" :placeholder="isEdit ? 'Isi jika ingin ganti password' : ''" />
           </div>
         </div>
 
-        <button @click="save" class="bg-blue-600 text-white w-full py-2.5 rounded-lg mt-6 text-sm font-medium hover:bg-blue-700">Simpan</button>
+        <button @click="save" class="bg-blue-600 text-white w-full py-2.5 rounded mt-6 hover:bg-blue-700">Simpan</button>
       </div>
     </div>
     <Toast ref="toast" />
@@ -123,23 +130,23 @@
 import axios from "axios";
 import Toast from "@/components/Toast.vue";
 import Avatar from "@/components/Avatar.vue";
-import SearchableSelect from "@/components/SearchableSelect.vue";
 import { HomeIcon, UserGroupIcon, AcademicCapIcon, BookOpenIcon, UsersIcon, ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, PlusIcon, PencilIcon, TrashIcon, ClipboardDocumentCheckIcon, MagnifyingGlassIcon } from "@heroicons/vue/24/solid";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/users`;
 
 export default {
-  components: { Toast, Avatar, SearchableSelect, HomeIcon, UserGroupIcon, AcademicCapIcon, BookOpenIcon, UsersIcon, ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, PlusIcon, PencilIcon, TrashIcon, ClipboardDocumentCheckIcon, MagnifyingGlassIcon },
+  components: { Toast, Avatar, HomeIcon, UserGroupIcon, AcademicCapIcon, BookOpenIcon, UsersIcon, ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, PlusIcon, PencilIcon, TrashIcon, ClipboardDocumentCheckIcon, MagnifyingGlassIcon },
   data() {
     return {
       openSidebar: false,
       user: JSON.parse(localStorage.getItem("user")),
       users: [],
+      options: { guru: [], siswa: [] },
+      selectedPerson: null,
       searchQuery: "",
       currentPage: 1,
       itemsPerPage: 10,
-      rawData: { guru: [], siswa: [] }, // Data untuk dropdown
       showForm: false,
       isEdit: false,
       form: { id: null, name: "", username: "", password: "", role: "guru", link_id: null }
@@ -148,77 +155,60 @@ export default {
   computed: {
     filteredData() {
       if (!this.searchQuery) return this.users;
-      const lower = this.searchQuery.toLowerCase();
-      return this.users.filter(u => u.name.toLowerCase().includes(lower) || u.username.toLowerCase().includes(lower));
+      const q = this.searchQuery.toLowerCase();
+      return this.users.filter(u => u.name.toLowerCase().includes(q) || u.username.toLowerCase().includes(q));
     },
     totalPages() { return Math.ceil(this.filteredData.length / this.itemsPerPage); },
     paginatedData() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       return this.filteredData.slice(start, start + this.itemsPerPage);
-    },
-    formattedOptions() {
-      return {
-        guru: this.rawData.guru.map(g => ({ label: `${g.nama} (NIP: ${g.nip})`, value: g.nama, meta: g.nip, id: g.id })),
-        siswa: this.rawData.siswa.map(s => ({ label: `${s.nama} (Kelas: ${s.kelas})`, value: s.nama, meta: s.nis, id: s.id }))
-      };
     }
   },
-  watch: { searchQuery() { this.currentPage = 1; } },
   methods: {
-    getAuthConfig() { return { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }; },
+    getAuth() { return { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }; },
     async getData() {
       try {
-        // PERBAIKAN LOGIKA: Ambil Users & Options sekaligus dari endpoint baru
-        const { data } = await axios.get(API_URL, this.getAuthConfig());
-        this.users = data.users; // List User
-        this.rawData.guru = data.options.guru; // Dropdown Guru
-        this.rawData.siswa = data.options.siswa; // Dropdown Siswa
-      } catch (e) {
-        if (e.response?.status === 401) this.logout();
+        const { data } = await axios.get(API_URL, this.getAuth());
+        this.users = data.users;
+        this.options = data.options;
+      } catch (e) { if(e.response?.status === 401) this.logout(); }
+    },
+    fillData() {
+      if(this.selectedPerson) {
+        this.form.name = this.selectedPerson.nama;
+        this.form.username = this.selectedPerson.nip || this.selectedPerson.nis;
+        this.form.link_id = this.selectedPerson.id;
+        this.form.password = this.form.username; 
       }
     },
     openForm() {
       this.form = { id: null, name: "", username: "", password: "", role: "guru", link_id: null };
+      this.selectedPerson = null;
       this.isEdit = false;
       this.showForm = true;
+      this.getData();
     },
-    edit(item) {
-      this.form = { ...item, password: "" };
-      this.isEdit = true;
-      this.showForm = true;
-    },
-    onRoleChange() {
-      if (!this.isEdit) { this.form.name = ""; this.form.username = ""; this.form.link_id = null; }
-    },
-    onUserSelected(option) {
-      if (option) {
-        this.form.username = option.meta; // Auto-fill Username dengan NIP/NIS
-        this.form.link_id = option.id;    // Simpan ID asli Guru/Siswa untuk relasi
-      }
-    },
+    edit(item) { this.form = { ...item, password: "" }; this.isEdit = true; this.showForm = true; },
     closeForm() { this.showForm = false; },
+    onRoleChange() { if(!this.isEdit) { this.form.name = ""; this.form.username = ""; this.selectedPerson = null; } },
     async save() {
-      if (!this.form.name || !this.form.username) return this.$refs.toast.show("Lengkapi data!", "error");
+      if (!this.form.username || !this.form.name) return this.$refs.toast.show("Data tidak lengkap", "error");
       try {
-        const auth = this.getAuthConfig();
+        const auth = this.getAuth();
         if (this.isEdit) await axios.put(`${API_URL}/${this.form.id}`, this.form, auth);
         else await axios.post(API_URL, this.form, auth);
-        this.$refs.toast.show("Berhasil!", "success");
-        this.showForm = false;
-        this.getData();
+        this.showForm = false; this.getData(); this.$refs.toast.show("Berhasil!", "success");
       } catch (e) { this.$refs.toast.show("Gagal menyimpan", "error"); }
     },
     async remove(id) {
+      if (id === this.user.id) return alert("Tidak bisa hapus diri sendiri");
       if (!confirm("Hapus akun?")) return;
-      try {
-        await axios.delete(`${API_URL}/${id}`, this.getAuthConfig());
-        this.$refs.toast.show("Terhapus!", "success");
-        this.getData();
-      } catch (e) { this.$refs.toast.show("Gagal menghapus", "error"); }
+      try { await axios.delete(`${API_URL}/${id}`, this.getAuth()); this.getData(); }
+      catch (e) { alert("Gagal"); }
     },
+    logout() { localStorage.clear(); this.$router.push("/"); },
     prevPage() { if (this.currentPage > 1) this.currentPage--; },
-    nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; },
-    logout() { localStorage.clear(); this.$router.push("/"); }
+    nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; }
   },
   mounted() { this.getData(); }
 };
