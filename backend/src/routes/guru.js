@@ -9,20 +9,8 @@ router.use(auth("admin"));
 // GET: Ambil Semua Data Guru
 router.get("/", async (req, res) => {
   try {
-    // Tidak perlu JOIN mapel lagi
     const [rows] = await db.query("SELECT * FROM guru ORDER BY nama ASC");
     res.json(rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send(err);
-  }
-});
-
-// GET: Ambil Satu Guru
-router.get("/:id", async (req, res) => {
-  try {
-    const [rows] = await db.query("SELECT * FROM guru WHERE id = ?", [req.params.id]);
-    res.json(rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).send(err);
@@ -32,21 +20,24 @@ router.get("/:id", async (req, res) => {
 // POST: Tambah Guru Baru
 router.post("/", async (req, res) => {
   try {
-    // Sesuaikan dengan kolom baru
-    const { nip, nama, jabatan, wali_kelas } = req.body;
+    const { nip, nama, jabatan, wali_kelas_tingkat, wali_kelas_rombel } = req.body;
 
     if (!nip || !nama || !jabatan) 
       return res.status(400).json({ message: "NIP, Nama, dan Jabatan wajib diisi" });
 
+    // Cek Duplicate NIP
+    const [existing] = await db.query("SELECT id FROM guru WHERE nip = ?", [nip]);
+    if(existing.length > 0) return res.status(400).json({ message: "NIP sudah terdaftar" });
+
     const [result] = await db.query(
-      "INSERT INTO guru (nip, nama, jabatan, wali_kelas) VALUES (?, ?, ?, ?)",
-      [nip, nama, jabatan, wali_kelas || null] // wali_kelas boleh kosong/null
+      "INSERT INTO guru (nip, nama, jabatan, wali_kelas_tingkat, wali_kelas_rombel) VALUES (?, ?, ?, ?, ?)",
+      [nip, nama, jabatan, wali_kelas_tingkat || null, wali_kelas_rombel || null]
     );
 
     logActivity(req.user.name, "Menambah Guru", `Nama: ${nama}`);
     res.json({ message: "Guru berhasil ditambahkan", id: result.insertId });
   } catch (err) {
-    console.error("INSERT ERROR:", err);
+    console.error(err);
     res.status(500).json({ message: "Gagal menyimpan data", error: err });
   }
 });
@@ -54,11 +45,11 @@ router.post("/", async (req, res) => {
 // PUT: Edit Guru
 router.put("/:id", async (req, res) => {
   try {
-    const { nip, nama, jabatan, wali_kelas } = req.body;
+    const { nip, nama, jabatan, wali_kelas_tingkat, wali_kelas_rombel } = req.body;
 
     await db.query(
-      "UPDATE guru SET nip=?, nama=?, jabatan=?, wali_kelas=? WHERE id=?",
-      [nip, nama, jabatan, wali_kelas || null, req.params.id]
+      "UPDATE guru SET nip=?, nama=?, jabatan=?, wali_kelas_tingkat=?, wali_kelas_rombel=? WHERE id=?",
+      [nip, nama, jabatan, wali_kelas_tingkat || null, wali_kelas_rombel || null, req.params.id]
     );
 
     logActivity(req.user.name, "Mengedit Guru", `ID: ${req.params.id}, Nama: ${nama}`);
