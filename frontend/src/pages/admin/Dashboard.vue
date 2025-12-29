@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex font-sans">
+  <div class="min-h-screen bg-gray-50 flex">
     <aside class="h-screen w-64 bg-[#0057A8] text-white flex-col fixed md:relative z-50 hidden md:flex">
        <div class="flex flex-col items-center mt-8 gap-3 px-2 text-center">
           <img src="/logo-sma.png" class="w-20" />
@@ -28,28 +28,20 @@
       <main class="p-8">
         <section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div class="bg-white p-6 rounded-xl shadow border-l-4 border-purple-500">
-            <div class="flex justify-between items-center">
-                <div><p class="text-gray-500 text-sm">Total Guru</p><p class="text-3xl font-bold text-gray-800">{{ stats.guru }}</p></div>
-                <UserGroupIcon class="w-10 h-10 text-purple-200" />
-            </div>
+            <div class="text-gray-500 text-sm">Total Guru</div>
+            <div class="text-3xl font-bold text-gray-800">{{ stats.guru }}</div>
           </div>
           <div class="bg-white p-6 rounded-xl shadow border-l-4 border-orange-500">
-            <div class="flex justify-between items-center">
-                <div><p class="text-gray-500 text-sm">Guru BK</p><p class="text-3xl font-bold text-gray-800">{{ stats.guruBk }}</p></div>
-                <ClipboardDocumentCheckIcon class="w-10 h-10 text-orange-200" />
-            </div>
+            <div class="text-gray-500 text-sm">Guru BK</div>
+            <div class="text-3xl font-bold text-gray-800">{{ stats.guruBk }}</div>
           </div>
           <div class="bg-white p-6 rounded-xl shadow border-l-4 border-green-500">
-            <div class="flex justify-between items-center">
-                <div><p class="text-gray-500 text-sm">Total Siswa</p><p class="text-3xl font-bold text-gray-800">{{ stats.siswa }}</p></div>
-                <AcademicCapIcon class="w-10 h-10 text-green-200" />
-            </div>
+            <div class="text-gray-500 text-sm">Total Siswa</div>
+            <div class="text-3xl font-bold text-gray-800">{{ stats.siswa }}</div>
           </div>
           <div class="bg-white p-6 rounded-xl shadow border-l-4 border-blue-500">
-            <div class="flex justify-between items-center">
-                <div><p class="text-gray-500 text-sm">Mata Pelajaran</p><p class="text-3xl font-bold text-gray-800">{{ stats.mapel }}</p></div>
-                <BookOpenIcon class="w-10 h-10 text-blue-200" />
-            </div>
+            <div class="text-gray-500 text-sm">Mata Pelajaran</div>
+            <div class="text-3xl font-bold text-gray-800">{{ stats.mapel }}</div>
           </div>
         </section>
 
@@ -63,7 +55,7 @@
                 </div>
                 <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{{ formatWaktu(log.timestamp) }}</span>
             </li>
-            <li v-if="aktivitas.length === 0" class="text-center text-gray-500 py-4">Belum ada aktivitas.</li>
+            <li v-if="aktivitas.length === 0" class="text-center text-gray-500 py-4">Belum ada aktivitas baru.</li>
           </ul>
         </section>
       </main>
@@ -94,16 +86,11 @@ export default {
     async fetchStats() {
       try {
         const auth = this.getAuth();
-        // Panggil endpoint baru
         const statsRes = await axios.get(`${BASE_URL}/api/dashboard/stats`, auth);
         this.stats = statsRes.data;
-
-        // Panggil aktivitas
         const actRes = await axios.get(`${BASE_URL}/api/aktivitas`, auth);
         this.aktivitas = actRes.data;
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) { console.error(e); }
     },
     formatWaktu(time) {
       return formatDistanceToNow(new Date(time), { addSuffix: true, locale: id });

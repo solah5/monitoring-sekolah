@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex font-sans">
+  <div class="min-h-screen bg-gray-50 flex">
     <aside class="h-screen w-64 bg-[#0057A8] text-white flex-col fixed md:relative z-50 hidden md:flex">
        <div class="flex flex-col items-center mt-8 gap-3 px-2 text-center">
           <img src="/logo-sma.png" class="w-20" />
@@ -40,7 +40,7 @@
                         <th class="p-4">No</th>
                         <th class="p-4">NIP</th>
                         <th class="p-4">Nama Guru</th>
-                        <th class="p-4">Mata Pelajaran</th>
+                        <th class="p-4">Mapel</th>
                         <th class="p-4 text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -68,7 +68,7 @@
             <div class="space-y-4">
                 <input v-model="form.nip" placeholder="NIP" class="w-full border p-2 rounded" />
                 <input v-model="form.nama" placeholder="Nama Lengkap" class="w-full border p-2 rounded" />
-                <select v-model="form.mapel_id" class="w-full border p-2 rounded">
+                <select v-model="form.mapel_id" class="w-full border p-2 rounded bg-white">
                     <option :value="null">-- Pilih Mapel --</option>
                     <option v-for="m in mapelList" :key="m.id" :value="m.id">{{ m.nama_mapel }}</option>
                 </select>
@@ -115,11 +115,10 @@ export default {
   methods: {
     getAuth() { return { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }; },
     async getData() {
-        const auth = this.getAuth();
         try {
             const [guruRes, mapelRes] = await Promise.all([
-                axios.get(`${BASE_URL}/api/guru`, auth),
-                axios.get(`${BASE_URL}/api/mapel`, auth)
+                axios.get(`${BASE_URL}/api/guru`, this.getAuth()),
+                axios.get(`${BASE_URL}/api/mapel`, this.getAuth())
             ]);
             this.guruList = guruRes.data;
             this.mapelList = mapelRes.data;
@@ -131,9 +130,8 @@ export default {
     async save() {
         if(!this.form.nama || !this.form.nip) return this.$refs.toast.show("Isi data wajib!", "error");
         try {
-            const auth = this.getAuth();
-            if(this.isEdit) await axios.put(`${BASE_URL}/api/guru/${this.form.id}`, this.form, auth);
-            else await axios.post(`${BASE_URL}/api/guru`, this.form, auth);
+            if(this.isEdit) await axios.put(`${BASE_URL}/api/guru/${this.form.id}`, this.form, this.getAuth());
+            else await axios.post(`${BASE_URL}/api/guru`, this.form, this.getAuth());
             this.getData(); this.closeModal(); this.$refs.toast.show("Berhasil!", "success");
         } catch(e) { this.$refs.toast.show("Gagal menyimpan", "error"); }
     },
