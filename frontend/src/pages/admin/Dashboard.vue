@@ -126,9 +126,10 @@ export default {
     async fetchStats() {
       try {
         const auth = this.getAuthConfig();
-        // LOGIKA BARU: Panggil endpoint dashboard yang sudah kita perbaiki
+        
+        // Panggil endpoint DASHBOARD yang sudah kita perbaiki
         const statsRes = await axios.get(`${BASE_URL}/api/dashboard/stats`, auth);
-        this.stats = statsRes.data;
+        this.stats = statsRes.data; // Ini akan mengisi { guru, siswa, mapel, guruBk } dengan benar
 
         // Panggil aktivitas
         const actRes = await axios.get(`${BASE_URL}/api/aktivitas`, auth);
