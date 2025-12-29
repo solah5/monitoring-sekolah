@@ -26,7 +26,7 @@ router.get("/dashboard", async (req, res) => {
 // GET /api/bk/rekap
 router.get("/rekap", async (req, res) => {
   try {
-    // PERBAIKAN: Menggunakan 'n.nilai_akhir' sesuai struktur tabel database Anda
+    // PERBAIKAN: Ganti 'n.nilai' menjadi 'n.nilai_akhir'
     const query = `
       SELECT 
         s.id, s.nama, s.nis, s.kelas, s.rombel, s.status_eligible,
@@ -40,28 +40,46 @@ router.get("/rekap", async (req, res) => {
     const [rows] = await db.query(query);
     res.json(rows);
   } catch (err) {
-    console.error("SQL Error:", err);
+    console.error("SQL Error Rekap:", err);
     res.status(500).send(err);
   }
 });
 
-// GET Detail
+// GET /api/bk/detail/:siswa_id
 router.get("/detail/:siswa_id", async (req, res) => {
   try {
     const { siswa_id } = req.params;
-    // Menggunakan nilai_akhir untuk detail juga
-    const [nilai] = await db.query(`
-      SELECT n.id, n.nilai_akhir as nilai, m.nama_mapel, n.semester
+    
+    // 1. Ambil data nilai mentah (kolom tugas, uts, uas, nilai_akhir)
+    const [rawNilai] = await db.query(`
+      SELECT n.tugas, n.uts, n.uas, n.nilai_akhir, m.nama_mapel 
       FROM nilai n 
       JOIN mapel m ON n.mapel_id = m.id 
       WHERE n.siswa_id = ?
       ORDER BY m.nama_mapel ASC
     `, [siswa_id]);
 
-    const [prestasi] = await db.query("SELECT * FROM prestasi WHERE siswa_id = ?", [siswa_id]);
+    // 2. Transformasi data agar sesuai dengan tampilan Frontend (Unpivot)
+    // Frontend mengharapkan array objek dengan key: { nama_mapel, jenis_nilai, nilai }
+    let formattedNilai = [];
+    
+    rawNilai.forEach(item => {
+        formattedNilai.push(
+            { id: item.id + '_tugas', nama_mapel: item.nama_mapel, jenis_nilai: 'Tugas', nilai: item.tugas },
+            { id: item.id + '_uts', nama_mapel: item.nama_mapel, jenis_nilai: 'UTS', nilai: item.uts },
+            { id: item.id + '_uas', nama_mapel: item.nama_mapel, jenis_nilai: 'UAS', nilai: item.uas },
+            { id: item.id + '_akhir', nama_mapel: item.nama_mapel, jenis_nilai: 'Nilai Akhir', nilai: item.nilai_akhir }
+        );
+    });
 
-    res.json({ nilai, prestasi });
+    // 3. Ambil Prestasi
+    const [prestasi] = await db.query(`
+      SELECT * FROM prestasi WHERE siswa_id = ? ORDER BY tahun DESC
+    `, [siswa_id]);
+
+    res.json({ nilai: formattedNilai, prestasi });
   } catch (err) {
+    console.error("SQL Error Detail:", err);
     res.status(500).send(err);
   }
 });
@@ -71,6 +89,11 @@ router.put("/eligibility/:siswa_id", async (req, res) => {
   try {
     const { status } = req.body;
     await db.query("UPDATE siswa SET status_eligible = ? WHERE id = ?", [status, req.params.siswa_id]);
+    
+    // Log Activity (Optional)
+    // const [s] = await db.query("SELECT nama FROM siswa WHERE id=?", [req.params.siswa_id]);
+    // logActivity(req.user.name, "Update Status Eligible", `Siswa: ${s[0]?.nama} -> ${status}`);
+
     res.json({ message: "Status updated" });
   } catch (err) {
     res.status(500).send(err);
