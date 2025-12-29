@@ -1,6 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50 flex font-sans">
     <div v-if="openSidebar" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" @click="openSidebar = false"></div>
+
     <aside :class="['h-screen w-64 bg-[#0057A8] text-white flex-col overflow-y-auto transition-transform duration-300 fixed md:relative z-50', openSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0', openSidebar ? 'flex' : 'hidden md:flex']">
       <div class="relative z-50 bg-[#0057A8] h-full flex flex-col">
         <button @click="openSidebar = false" class="md:hidden absolute top-4 right-4 p-1 text-white"><XMarkIcon class="w-7 h-7" /></button>
@@ -32,15 +33,21 @@
       </header>
 
       <main class="flex-1 p-4 md:p-8">
-        <div class="flex justify-between mb-6">
-          <button @click="openForm" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2"><PlusIcon class="w-5 h-5" /><span>Tambah Akun</span></button>
-          <input v-model="searchQuery" type="text" placeholder="Cari..." class="w-64 pl-4 pr-4 py-2 border border-gray-300 rounded-lg" />
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <button @click="openForm" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2 w-full md:w-auto justify-center">
+            <PlusIcon class="w-5 h-5" /><span>Tambah Akun</span>
+          </button>
+          <div class="relative w-full md:w-64">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3"><MagnifyingGlassIcon class="w-5 h-5 text-gray-400" /></span>
+            <input v-model="searchQuery" type="text" placeholder="Cari nama atau username..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+          </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-x-auto">
           <table class="w-full text-left min-w-full">
             <thead class="bg-gray-50 border-b border-gray-200">
               <tr>
+                <th class="py-3 px-5 text-sm font-semibold text-gray-600">No</th>
                 <th class="py-3 px-5 text-sm font-semibold text-gray-600">Nama</th>
                 <th class="py-3 px-5 text-sm font-semibold text-gray-600">Username</th>
                 <th class="py-3 px-5 text-sm font-semibold text-gray-600">Role</th>
@@ -48,11 +55,14 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-if="filteredData.length === 0"><td colspan="4" class="py-6 text-center text-gray-500">Data tidak ditemukan.</td></tr>
-              <tr v-for="(u, index) in filteredData" :key="u.id" class="border-b border-gray-100 hover:bg-gray-50">
+              <tr v-if="paginatedData.length === 0"><td colspan="5" class="py-6 text-center text-gray-500">Data tidak ditemukan.</td></tr>
+              <tr v-for="(u, index) in paginatedData" :key="u.id" class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="py-3 px-5 text-sm text-gray-700">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
                 <td class="py-3 px-5 text-sm text-gray-700 font-bold">{{ u.name }}</td>
                 <td class="py-3 px-5 text-sm text-gray-700 font-mono text-blue-600">{{ u.username }}</td>
-                <td class="py-3 px-5 text-sm text-gray-700 capitalize"><span class="bg-gray-100 px-2 py-1 rounded text-xs font-bold">{{ u.role }}</span></td>
+                <td class="py-3 px-5 text-sm text-gray-700 capitalize">
+                    <span class="bg-gray-100 px-2 py-1 rounded text-xs font-bold uppercase">{{ u.role === 'bk' ? 'Guru BK' : u.role }}</span>
+                </td>
                 <td class="py-3 px-5 text-sm text-center">
                   <button @click="edit(u)" class="text-yellow-600 hover:text-yellow-700 p-1 mx-1"><PencilIcon class="w-5 h-5" /></button>
                   <button @click="remove(u.id)" class="text-red-600 hover:text-red-700 p-1 mx-1" :disabled="u.role === 'admin'"><TrashIcon class="w-5 h-5" /></button>
@@ -61,11 +71,19 @@
             </tbody>
           </table>
         </div>
+
+        <div v-if="totalPages > 1" class="flex items-center justify-between mt-4 border-t border-gray-200 pt-4">
+          <div class="text-sm text-gray-500">Halaman {{ currentPage }} dari {{ totalPages }}</div>
+          <div class="flex gap-2">
+            <button @click="prevPage" :disabled="currentPage === 1" class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 text-sm">Sebelumnya</button>
+            <button @click="nextPage" :disabled="currentPage === totalPages" class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 text-sm">Selanjutnya</button>
+          </div>
+        </div>
       </main>
     </div>
 
     <div v-if="showForm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click.self="closeForm">
-      <div class="bg-white w-full max-w-md p-6 rounded-xl shadow-xl relative">
+      <div class="bg-white w-full max-w-md p-6 rounded-xl shadow-xl relative h-auto max-h-[90vh] overflow-visible">
         <button @click="closeForm" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><XMarkIcon class="w-6 h-6" /></button>
         <h3 class="text-lg font-bold mb-5 text-gray-800">{{ isEdit ? "Edit Akun" : "Tambah Akun" }}</h3>
         
@@ -81,18 +99,30 @@
           </div>
 
           <div v-if="!isEdit && ['guru', 'siswa', 'bk'].includes(form.role)">
-             <label class="block text-sm font-medium mb-1">Pilih {{ form.role.toUpperCase() }} (Belum punya akun)</label>
+             <label class="block text-sm font-medium mb-1">Pilih Nama (Belum punya akun)</label>
              <select v-model="selectedPerson" @change="fillData" class="border p-2 w-full rounded bg-white">
                 <option :value="null">-- Pilih Nama --</option>
                 <option v-for="p in getOptionsForRole()" :key="p.id" :value="p">
                     {{ p.nama }} ({{ p.nip || p.nis }})
                 </option>
              </select>
+             <p v-if="getOptionsForRole().length === 0" class="text-xs text-red-500 mt-1">
+                *Tidak ada data {{ form.role }} yang belum punya akun.
+             </p>
           </div>
 
-          <div><label class="block text-sm font-medium mb-1">Nama Lengkap</label><input v-model="form.name" class="border p-2 w-full rounded" :readonly="!isEdit && ['guru','siswa','bk'].includes(form.role)" /></div>
-          <div><label class="block text-sm font-medium mb-1">Username</label><input v-model="form.username" class="border p-2 w-full rounded" /></div>
-          <div><label class="block text-sm font-medium mb-1">Password</label><input v-model="form.password" type="password" class="border p-2 w-full rounded" /></div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Nama Lengkap</label>
+            <input v-model="form.name" class="border p-2 w-full rounded focus:ring-2 focus:ring-blue-500" :readonly="!isEdit && ['guru','siswa','bk'].includes(form.role)" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Username</label>
+            <input v-model="form.username" class="border p-2 w-full rounded focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Password</label>
+            <input v-model="form.password" type="password" class="border p-2 w-full rounded focus:ring-2 focus:ring-blue-500" :placeholder="isEdit ? 'Isi jika ingin ganti password' : ''" />
+          </div>
         </div>
 
         <button @click="save" class="bg-blue-600 text-white w-full py-2.5 rounded mt-6 hover:bg-blue-700">Simpan</button>
@@ -106,14 +136,13 @@
 import axios from "axios";
 import Toast from "@/components/Toast.vue";
 import Avatar from "@/components/Avatar.vue";
-import SearchableSelect from "@/components/SearchableSelect.vue";
 import { HomeIcon, UserGroupIcon, AcademicCapIcon, BookOpenIcon, UsersIcon, ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, PlusIcon, PencilIcon, TrashIcon, ClipboardDocumentCheckIcon, MagnifyingGlassIcon } from "@heroicons/vue/24/solid";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/users`;
 
 export default {
-  components: { Toast, Avatar, SearchableSelect, HomeIcon, UserGroupIcon, AcademicCapIcon, BookOpenIcon, UsersIcon, ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, PlusIcon, PencilIcon, TrashIcon, ClipboardDocumentCheckIcon, MagnifyingGlassIcon },
+  components: { Toast, Avatar, HomeIcon, UserGroupIcon, AcademicCapIcon, BookOpenIcon, UsersIcon, ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, PlusIcon, PencilIcon, TrashIcon, ClipboardDocumentCheckIcon, MagnifyingGlassIcon },
   data() {
     return {
       openSidebar: false,
@@ -122,9 +151,11 @@ export default {
       rawData: { guru: [], bk: [], siswa: [] },
       selectedPerson: null,
       searchQuery: "",
+      currentPage: 1,
+      itemsPerPage: 10,
       showForm: false,
       isEdit: false,
-      form: { id: null, name: "", username: "", password: "", role: "guru" }
+      form: { id: null, name: "", username: "", password: "", role: "guru", link_id: null }
     };
   },
   computed: {
@@ -132,6 +163,11 @@ export default {
       if (!this.searchQuery) return this.users;
       const q = this.searchQuery.toLowerCase();
       return this.users.filter(u => u.name.toLowerCase().includes(q) || u.username.toLowerCase().includes(q));
+    },
+    totalPages() { return Math.ceil(this.filteredData.length / this.itemsPerPage); },
+    paginatedData() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      return this.filteredData.slice(start, start + this.itemsPerPage);
     }
   },
   methods: {
@@ -140,9 +176,10 @@ export default {
       try {
         const { data } = await axios.get(API_URL, this.getAuthConfig());
         this.users = data.users;
-        this.rawData.guru = data.options.guru;
-        this.rawData.siswa = data.options.siswa;
-        this.rawData.bk = data.options.bk; // Ambil data BK dari response
+        // Gunakan safety check (|| []) agar tidak error jika backend belum siap
+        this.rawData.guru = data.options.guru || [];
+        this.rawData.siswa = data.options.siswa || [];
+        this.rawData.bk = data.options.bk || []; 
       } catch (e) { if(e.response?.status === 401) this.logout(); }
     },
     getOptionsForRole() {
@@ -155,14 +192,27 @@ export default {
       if(this.selectedPerson) {
         this.form.name = this.selectedPerson.nama;
         this.form.username = this.selectedPerson.nip || this.selectedPerson.nis;
-        this.form.link_id = this.selectedPerson.id; // ID untuk relasi
+        this.form.link_id = this.selectedPerson.id; // Simpan ID untuk relasi
         this.form.password = this.form.username; 
       }
     },
-    openForm() { this.form = { id: null, name: "", username: "", password: "", role: "guru" }; this.selectedPerson = null; this.isEdit = false; this.showForm = true; this.getData(); },
+    openForm() { 
+      this.form = { id: null, name: "", username: "", password: "", role: "guru", link_id: null }; 
+      this.selectedPerson = null; 
+      this.isEdit = false; 
+      this.showForm = true; 
+      this.getData(); // Refresh options saat buka modal
+    },
     edit(item) { this.form = { ...item, password: "" }; this.isEdit = true; this.showForm = true; },
     closeForm() { this.showForm = false; },
-    onRoleChange() { if(!this.isEdit) { this.form.name = ""; this.form.username = ""; this.selectedPerson = null; } },
+    onRoleChange() { 
+      if(!this.isEdit) { 
+        this.form.name = ""; 
+        this.form.username = ""; 
+        this.selectedPerson = null; 
+        this.form.link_id = null;
+      } 
+    },
     async save() {
       if (!this.form.username || !this.form.name) return this.$refs.toast.show("Data tidak lengkap", "error");
       try {
@@ -178,7 +228,9 @@ export default {
       try { await axios.delete(`${API_URL}/${id}`, this.getAuthConfig()); this.getData(); }
       catch (e) { alert("Gagal"); }
     },
-    logout() { localStorage.clear(); this.$router.push("/"); }
+    logout() { localStorage.clear(); this.$router.push("/"); },
+    prevPage() { if (this.currentPage > 1) this.currentPage--; },
+    nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; }
   },
   mounted() { this.getData(); }
 };
