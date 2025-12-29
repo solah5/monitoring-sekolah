@@ -15,9 +15,9 @@ router.post("/login", async (req, res) => {
     return res.status(400).json({ message: "Username & password wajib" });
 
   try {
-    // PERBAIKAN QUERY:
-    // 1. Hapus 'users.name' (karena kolom ini tidak ada di DB Anda)
-    // 2. Ambil 'guru.nama' dan 'siswa.nama' lewat JOIN
+    // PERBAIKAN UTAMA DI SINI:
+    // Kita HAPUS 'users.name' dari query SQL di bawah ini.
+    // Sebagai gantinya, kita ambil nama dari tabel guru atau siswa.
     const query = `
       SELECT users.id, users.username, users.password, users.role,
              guru.id AS guru_id,
@@ -40,9 +40,8 @@ router.post("/login", async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ message: "Password salah" });
 
-    // LOGIKA PENENTUAN NAMA:
-    // Prioritaskan nama dari tabel Guru/Siswa. Jika tidak ada (misal Admin), pakai 'Administrator' atau username.
-    let displayName = user.username; 
+    // LOGIKA PENENTUAN NAMA (Agar tidak error nama kosong)
+    let displayName = user.username; // Default pakai username
     
     if (user.role === 'guru' && user.nama_guru) {
       displayName = user.nama_guru;
@@ -52,10 +51,10 @@ router.post("/login", async (req, res) => {
       displayName = "Administrator"; 
     }
 
-    // Payload Token
+    // Buat Token
     const tokenPayload = {
       id: user.id,
-      name: displayName, // Frontend akan membaca ini sebagai nama user
+      name: displayName, 
       username: user.username,
       role: user.role,
       guru_id: user.guru_id, 
