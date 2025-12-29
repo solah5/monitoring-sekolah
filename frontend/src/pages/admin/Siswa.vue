@@ -1,5 +1,11 @@
 <template>
   <div class="min-h-screen bg-gray-50 flex">
+    <div
+      v-if="openSidebar"
+      class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+      @click="openSidebar = false"
+    ></div>
+
     <aside
       :class="[
         'h-screen w-64 bg-[#0057A8] text-white flex-col overflow-y-auto transition-transform duration-300 fixed md:relative z-50',
@@ -7,12 +13,6 @@
         openSidebar ? 'flex' : 'hidden md:flex',
       ]"
     >
-      <div
-        v-if="openSidebar"
-        class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-        @click="openSidebar = false"
-      ></div>
-
       <div class="relative z-50 bg-[#0057A8] h-full flex flex-col">
         <button
           @click="openSidebar = false"
@@ -31,63 +31,33 @@
         <nav class="flex-1 w-full mt-10 px-4">
           <ul class="space-y-3">
             <li>
-              <router-link
-                to="/admin"
-                class="nav-link"
-                :class="{ 'nav-link-active': $route.name === 'AdminDashboard' }"
-              >
-                <HomeIcon class="w-5 h-5" />
-                <span>Dashboard</span>
+              <router-link to="/admin" class="nav-link">
+                <HomeIcon class="w-5 h-5" /><span>Dashboard</span>
               </router-link>
             </li>
             <li>
-              <router-link
-                to="/admin/guru"
-                class="nav-link"
-                :class="{ 'nav-link-active': $route.name === 'Guru' }"
-              >
-                <UserGroupIcon class="w-5 h-5" />
-                <span>Kelola Guru</span>
+              <router-link to="/admin/guru" class="nav-link">
+                <UserGroupIcon class="w-5 h-5" /><span>Kelola Guru</span>
               </router-link>
             </li>
             <li>
-              <router-link
-                to="/admin/guru-bk"
-                class="nav-link"
-                :class="{ 'nav-link-active': $route.name === 'GuruBK' }"
-              >
-                <ClipboardDocumentCheckIcon class="w-5 h-5" />
-                <span>Kelola Guru BK</span>
+              <router-link to="/admin/guru-bk" class="nav-link">
+                <ClipboardDocumentCheckIcon class="w-5 h-5" /><span>Kelola Guru BK</span>
               </router-link>
             </li>
             <li>
-              <router-link
-                to="/admin/siswa"
-                class="nav-link"
-                :class="{ 'nav-link-active': $route.name === 'Siswa' }"
-              >
-                <AcademicCapIcon class="w-5 h-5" />
-                <span>Kelola Siswa</span>
+              <router-link to="/admin/siswa" class="nav-link nav-link-active">
+                <AcademicCapIcon class="w-5 h-5" /><span>Kelola Siswa</span>
               </router-link>
             </li>
             <li>
-              <router-link
-                to="/admin/mapel"
-                class="nav-link"
-                :class="{ 'nav-link-active': $route.name === 'Mapel' }"
-              >
-                <BookOpenIcon class="w-5 h-5" />
-                <span>Kelola Mapel</span>
+              <router-link to="/admin/mapel" class="nav-link">
+                <BookOpenIcon class="w-5 h-5" /><span>Kelola Mapel</span>
               </router-link>
             </li>
             <li>
-              <router-link
-                to="/admin/users"
-                class="nav-link"
-                :class="{ 'nav-link-active': $route.name === 'Users' }"
-              >
-                <UsersIcon class="w-5 h-5" />
-                <span>Kelola Akun</span>
+              <router-link to="/admin/users" class="nav-link">
+                <UsersIcon class="w-5 h-5" /><span>Kelola Akun</span>
               </router-link>
             </li>
           </ul>
@@ -168,7 +138,7 @@
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="Cari nama, NIS, atau NISN..."
+              placeholder="Cari nama atau NIS..."
               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-colors"
             />
           </div>
@@ -178,36 +148,42 @@
           <table class="w-full text-left min-w-full">
             <thead class="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">Nama</th>
+                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap w-12">No</th>
                 <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">NIS</th>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">NISN</th>
+                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">Nama Siswa</th>
                 <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">Kelas</th>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">Thn. Masuk</th>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">Thn. Keluar</th>
+                <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap">Rombel</th>
                 <th class="py-3 px-5 text-sm font-semibold text-gray-600 whitespace-nowrap text-center">Aksi</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="paginatedData.length === 0">
-                <td colspan="7" class="py-6 text-center text-gray-500">
+                <td colspan="6" class="py-6 text-center text-gray-500">
                    {{ searchQuery ? 'Data tidak ditemukan.' : 'Memuat data...' }}
                 </td>
               </tr>
               <tr
-                v-for="item in paginatedData"
+                v-for="(item, index) in paginatedData"
                 :key="item.id"
                 class="border-b border-gray-100 hover:bg-gray-50"
               >
-                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">{{ item.nama }}</td>
-                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">{{ item.nis }}</td>
-                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">{{ item.nisn }}</td>
+                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">
+                    {{ (currentPage - 1) * itemsPerPage + index + 1 }}
+                </td>
+                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap font-mono">
+                    {{ item.nis }}
+                </td>
+                <td class="py-3 px-5 text-sm text-gray-700 font-bold whitespace-nowrap">
+                    {{ item.nama }}
+                </td>
                 <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">
                     <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold border border-blue-100">
-                        {{ item.kelas }}
+                      {{ item.kelas }}
                     </span>
                 </td>
-                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">{{ item.tahun_masuk }}</td>
-                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">{{ item.tahun_keluar || "-" }}</td>
+                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">
+                    {{ item.rombel }}
+                </td>
                 <td class="py-3 px-5 text-sm text-center whitespace-nowrap">
                   <button
                     @click="edit(item)"
@@ -272,76 +248,55 @@
 
         <div class="space-y-4">
           <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">NIS</label>
+            <input
+              v-model="form.nis"
+              placeholder="Masukkan NIS"
+              class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p v-if="errors.nis" class="text-red-600 text-sm mt-1">
+              {{ errors.nis }}
+            </p>
+          </div>
+
+          <div>
             <label class="block text-sm font-medium text-gray-600 mb-1">Nama Lengkap</label>
             <input
               v-model="form.nama"
-              placeholder="Masukkan nama"
+              placeholder="Masukkan nama siswa"
               class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p v-if="errors.nama" class="text-red-600 text-sm mt-1">
               {{ errors.nama }}
             </p>
           </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-600 mb-1">NIS</label>
-              <input
-                v-model="form.nis"
-                placeholder="NIS"
-                class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p v-if="errors.nis" class="text-red-600 text-sm mt-1">
-                {{ errors.nis }}
-              </p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-600 mb-1">NISN</label>
-              <input
-                v-model="form.nisn"
-                placeholder="NISN"
-                class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p v-if="errors.nisn" class="text-red-600 text-sm mt-1">
-                {{ errors.nisn }}
-              </p>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Kelas</label>
-            <select
-              v-model="form.kelas"
-              class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              <option value="">-- Pilih Kelas --</option>
-              <option value="X">X</option>
-              <option value="XI">XI</option>
-              <option value="XII">XII</option>
-            </select>
-            <p v-if="errors.kelas" class="text-red-600 text-sm mt-1">
-              {{ errors.kelas }}
-            </p>
-          </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-600 mb-1">Thn. Masuk</label>
-              <input
-                v-model="form.tahun_masuk"
-                placeholder="YYYY"
-                class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p v-if="errors.tahun_masuk" class="text-red-600 text-sm mt-1">
-                {{ errors.tahun_masuk }}
+              <label class="block text-sm font-medium text-gray-600 mb-1">Kelas</label>
+              <select
+                v-model="form.kelas"
+                class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="">-- Pilih --</option>
+                <option value="X">X</option>
+                <option value="XI">XI</option>
+                <option value="XII">XII</option>
+              </select>
+              <p v-if="errors.kelas" class="text-red-600 text-sm mt-1">
+                {{ errors.kelas }}
               </p>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-600 mb-1">Thn. Keluar</label>
+              <label class="block text-sm font-medium text-gray-600 mb-1">Rombel</label>
               <input
-                v-model="form.tahun_keluar"
-                placeholder="Opsional"
+                v-model="form.rombel"
+                placeholder="Contoh: 1, 2, IPA 1"
                 class="border border-gray-300 p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              <p v-if="errors.rombel" class="text-red-600 text-sm mt-1">
+                {{ errors.rombel }}
+              </p>
             </div>
           </div>
         </div>
@@ -363,7 +318,7 @@
 import axios from "axios";
 import * as XLSX from "xlsx"; 
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable"; // Import autoTable yang benar
+import autoTable from "jspdf-autotable";
 import Toast from "@/components/Toast.vue";
 import Avatar from "@/components/Avatar.vue";
 import {
@@ -384,7 +339,6 @@ import {
   DocumentTextIcon,
 } from "@heroicons/vue/24/solid";
 
-// Menggunakan BASE_URL
 const BASE_URL = import.meta.env.VITE_API_URL;
 const API_URL = `${BASE_URL}/api/siswa`;
 
@@ -413,29 +367,14 @@ export default {
       openSidebar: false,
       user: JSON.parse(localStorage.getItem("user")),
       siswa: [],
-      
       searchQuery: "",
       currentPage: 1,
       itemsPerPage: 10,
-
       showForm: false,
       isEdit: false,
-      form: {
-        id: null,
-        nama: "",
-        nis: "",
-        nisn: "",
-        kelas: "",
-        tahun_masuk: "",
-        tahun_keluar: "",
-      },
-      errors: {
-        nama: "",
-        nis: "",
-        nisn: "",
-        kelas: "",
-        tahun_masuk: "",
-      },
+      // FIELD FORM DISESUAIKAN: nis, nama, kelas, rombel
+      form: { id: null, nama: "", nis: "", kelas: "", rombel: "" },
+      errors: { nama: "", nis: "", kelas: "", rombel: "" },
     };
   },
   computed: {
@@ -444,8 +383,7 @@ export default {
       const lowerQuery = this.searchQuery.toLowerCase();
       return this.siswa.filter(item => 
         item.nama.toLowerCase().includes(lowerQuery) || 
-        item.nis.includes(lowerQuery) ||
-        item.nisn.includes(lowerQuery)
+        item.nis.includes(lowerQuery)
       );
     },
     totalPages() {
@@ -465,11 +403,7 @@ export default {
   methods: {
     getAuthConfig() {
       const token = localStorage.getItem("token");
-      return {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
+      return { headers: { Authorization: `Bearer ${token}` } };
     },
     async getData() {
       try {
@@ -477,101 +411,75 @@ export default {
         this.siswa = data;
       } catch (e) {
         this.$refs.toast.show("Gagal mengambil data siswa", "error");
-        if (e.response?.status === 401 || e.response?.status === 403) {
-          this.logout();
-        }
+        if (e.response?.status === 401) this.logout();
       }
     },
     
-    // --- METHOD EXPORT EXCEL ---
+    // --- EXPORT EXCEL ---
     exportExcel() {
       try {
         const dataToExport = this.filteredData.map(s => ({
           "Nama Lengkap": s.nama,
           "NIS": s.nis,
-          "NISN": s.nisn,
           "Kelas": s.kelas,
-          "Tahun Masuk": s.tahun_masuk,
-          "Tahun Keluar": s.tahun_keluar || "-"
+          "Rombel": s.rombel
         }));
 
-        if (dataToExport.length === 0) {
-          this.$refs.toast.show("Tidak ada data untuk diexport", "error");
-          return;
-        }
+        if (dataToExport.length === 0) return this.$refs.toast.show("Tidak ada data", "error");
 
         const ws = XLSX.utils.json_to_sheet(dataToExport);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Data Siswa");
 
-        XLSX.writeFile(wb, "Data_Siswa_SMAN1_Gunung_Sindur.xlsx");
-        this.$refs.toast.show("Data berhasil diunduh (Excel)!", "success");
+        XLSX.writeFile(wb, "Data_Siswa.xlsx");
+        this.$refs.toast.show("Download Excel Berhasil!", "success");
       } catch (e) {
-        console.error("Export error:", e);
-        this.$refs.toast.show("Gagal mengunduh data", "error");
+        this.$refs.toast.show("Gagal download", "error");
       }
     },
 
-    // --- METHOD EXPORT PDF (FIXED) ---
+    // --- EXPORT PDF ---
     exportPDF() {
         try {
-            if (this.filteredData.length === 0) {
-                this.$refs.toast.show("Tidak ada data untuk diexport", "error");
-                return;
-            }
+            if (this.filteredData.length === 0) return this.$refs.toast.show("Tidak ada data", "error");
 
             const doc = new jsPDF();
-
-            // Header
             doc.setFontSize(18);
             doc.text("Data Siswa SMA Negeri 1 Gunung Sindur", 14, 22);
             doc.setFontSize(11);
             doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 30);
 
-            // Tabel Data
-            const tableColumn = ["No", "Nama", "NIS", "NISN", "Kelas", "Thn Masuk"];
+            const tableColumn = ["No", "NIS", "Nama", "Kelas", "Rombel"];
             const tableRows = [];
 
             this.filteredData.forEach((s, index) => {
-                const row = [
+                tableRows.push([
                     index + 1,
-                    s.nama,
                     s.nis,
-                    s.nisn,
+                    s.nama,
                     s.kelas,
-                    s.tahun_masuk
-                ];
-                tableRows.push(row);
+                    s.rombel
+                ]);
             });
 
-            // Gunakan autoTable sebagai fungsi
             autoTable(doc, {
                 head: [tableColumn],
                 body: tableRows,
                 startY: 40,
             });
 
-            doc.save("Data_Siswa_SMAN1_Gunung_Sindur.pdf");
-            this.$refs.toast.show("Data berhasil diunduh (PDF)!", "success");
-
+            doc.save("Data_Siswa.pdf");
+            this.$refs.toast.show("Download PDF Berhasil!", "success");
         } catch(e) {
-            console.error("PDF Export Error:", e);
-            this.$refs.toast.show("Gagal mengunduh PDF", "error");
+            this.$refs.toast.show("Gagal download PDF", "error");
         }
     },
 
     prevPage() { if (this.currentPage > 1) this.currentPage--; },
     nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; },
+    
     openForm() {
-      this.form = {
-        id: null,
-        nama: "",
-        nis: "",
-        nisn: "",
-        kelas: "",
-        tahun_masuk: new Date().getFullYear(),
-        tahun_keluar: "",
-      };
+      this.form = { id: null, nama: "", nis: "", kelas: "", rombel: "" };
       this.resetErrors();
       this.isEdit = false;
       this.showForm = true;
@@ -589,40 +497,27 @@ export default {
       let valid = true;
       this.resetErrors();
 
-      if (!this.form.nama) { this.errors.nama = "Nama wajib diisi"; valid = false; }
       if (!this.form.nis) { this.errors.nis = "NIS wajib diisi"; valid = false; }
       else if (!/^[0-9]+$/.test(this.form.nis)) { this.errors.nis = "NIS harus angka"; valid = false; }
       
-      if (!this.form.nisn) { this.errors.nisn = "NISN wajib diisi"; valid = false; }
-      else if (!/^[0-9]+$/.test(this.form.nisn)) { this.errors.nisn = "NISN harus angka"; valid = false; }
-      
+      if (!this.form.nama) { this.errors.nama = "Nama wajib diisi"; valid = false; }
       if (!this.form.kelas) { this.errors.kelas = "Kelas wajib dipilih"; valid = false; }
-      
-      if (!this.form.tahun_masuk) { this.errors.tahun_masuk = "Tahun masuk wajib diisi"; valid = false; }
-      else if (!/^[0-9]{4}$/.test(this.form.tahun_masuk)) { this.errors.tahun_masuk = "Tahun harus 4 digit (YYYY)"; valid = false; }
+      if (!this.form.rombel) { this.errors.rombel = "Rombel wajib diisi"; valid = false; }
 
       return valid;
     },
     resetErrors() {
-      this.errors = { nama: "", nis: "", nisn: "", kelas: "", tahun_masuk: "" };
+      this.errors = { nama: "", nis: "", kelas: "", rombel: "" };
     },
     async save() {
-      if (!this.validate()) {
-        this.$refs.toast.show("Periksa input anda!", "error");
-        return;
-      }
-
-      const payload = {
-        ...this.form,
-        tahun_keluar: this.form.tahun_keluar || null,
-      };
+      if (!this.validate()) return this.$refs.toast.show("Lengkapi data inputan!", "error");
 
       try {
         if (this.isEdit) {
-          await axios.put(`${API_URL}/${this.form.id}`, payload, this.getAuthConfig());
+          await axios.put(`${API_URL}/${this.form.id}`, this.form, this.getAuthConfig());
           this.$refs.toast.show("Siswa berhasil diperbarui!", "success");
         } else {
-          await axios.post(API_URL, payload, this.getAuthConfig());
+          await axios.post(API_URL, this.form, this.getAuthConfig());
           this.$refs.toast.show("Siswa berhasil ditambahkan!", "success");
         }
         this.showForm = false;
