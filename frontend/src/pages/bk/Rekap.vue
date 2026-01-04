@@ -12,7 +12,6 @@
           <ul class="space-y-3">
             <li><router-link to="/bk" class="nav-link"><HomeIcon class="w-5 h-5" /><span>Dashboard</span></router-link></li>
             <li><router-link to="/bk/rekap" class="nav-link nav-link-active"><ChartBarIcon class="w-5 h-5" /><span>Rekap & Eligible</span></router-link></li>
-            <li><router-link to="/bk/prestasi" class="nav-link"><TrophyIcon class="w-5 h-5" /><span>Prestasi Siswa</span></router-link></li>
           </ul>
         </nav>
         <div class="p-4 mt-auto">

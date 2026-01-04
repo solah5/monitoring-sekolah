@@ -4,32 +4,28 @@ const db = require("../config/db");
 const { auth } = require("../middleware/auth");
 const { logActivity } = require("../utils/logger");
 
-// Izinkan akses untuk: Guru, Admin, dan Guru BK
-router.use(auth(["guru", "admin", "bk"]));
+// PERUBAHAN: Hapus 'bk' dari daftar role yang diizinkan
+router.use(auth(["guru", "admin"]));
 
 // --- HELPER FUNCTION: Cek Hak Akses Wali Kelas ---
-// Mengembalikan true jika user berhak mengakses siswa tersebut
 async function checkAccess(user, siswaId) {
-  // Admin dan BK bebas akses siapa saja
-  if (user.role === 'admin' || user.role === 'bk') return true;
+  // PERUBAHAN: Hanya Admin yang bebas akses (BK sudah diblokir di middleware atas)
+  if (user.role === 'admin') return true;
 
   // Jika Guru, cek apakah siswa ada di kelas yang dia ampu
   if (user.role === 'guru') {
     const [siswa] = await db.query("SELECT kelas, rombel FROM siswa WHERE id = ?", [siswaId]);
     
-    // Jika siswa tidak ditemukan atau kelas tidak sama dengan wali kelas
     if (siswa.length === 0) return false;
     
-    // Bandingkan Kelas & Rombel
     if (siswa[0].kelas === user.wali_kelas_tingkat && siswa[0].rombel === user.wali_kelas_rombel) {
       return true;
     }
-    return false; // Kelas beda
+    return false; 
   }
 
-  return false; // Role tidak dikenali
+  return false; 
 }
-
 
 // GET: Ambil Data Prestasi
 router.get("/", async (req, res) => {
@@ -44,9 +40,7 @@ router.get("/", async (req, res) => {
     
     let params = [];
 
-    // FILTER KHUSUS WALI KELAS
-    // Jika role 'guru', hanya tampilkan siswa di kelasnya.
-    // Admin dan BK akan melewati blok ini (melihat semua).
+    // Jika Guru, filter sesuai kelas
     if (role === 'guru' && wali_kelas_tingkat) {
        query += ` WHERE siswa.kelas = ? AND siswa.rombel = ?`;
        params.push(wali_kelas_tingkat, wali_kelas_rombel);
@@ -70,8 +64,6 @@ router.post("/", async (req, res) => {
     if (!siswa_id || !judul_prestasi) 
         return res.status(400).json({ message: "Data wajib diisi" });
 
-    // VALIDASI AKSES (Penting!)
-    // Pastikan Wali Kelas tidak menginput untuk siswa kelas lain
     const isAllowed = await checkAccess(req.user, siswa_id);
     if (!isAllowed) {
         return res.status(403).json({ message: "Anda tidak memiliki akses untuk siswa ini." });
@@ -93,13 +85,11 @@ router.post("/", async (req, res) => {
 // PUT: Edit Prestasi
 router.put("/:id", async (req, res) => {
   try {
-    const { siswa_id, judul_prestasi, tingkat, tahun } = req.body; // siswa_id dikirim untuk validasi
+    const { siswa_id, judul_prestasi, tingkat, tahun } = req.body;
 
-    // Cek dulu record yang mau diedit milik siapa
     const [existing] = await db.query("SELECT siswa_id FROM prestasi WHERE id = ?", [req.params.id]);
     if (existing.length === 0) return res.status(404).json({ message: "Data tidak ditemukan" });
 
-    // Validasi Akses (Cek siswa_id yang tersimpan di database)
     const targetSiswaId = existing[0].siswa_id;
     const isAllowed = await checkAccess(req.user, targetSiswaId);
     
@@ -107,14 +97,11 @@ router.put("/:id", async (req, res) => {
         return res.status(403).json({ message: "Anda tidak berhak mengedit data ini." });
     }
 
-    // Jika siswa_id berubah (misal admin memindahkan prestasi ke siswa lain), validasi juga siswa baru
     if (siswa_id && siswa_id !== targetSiswaId) {
         const isNewAllowed = await checkAccess(req.user, siswa_id);
         if (!isNewAllowed) return res.status(403).json({ message: "Anda tidak berhak memindahkan ke siswa tersebut." });
     }
 
-    // Lakukan Update
-    // (Jika siswa_id tidak dikirim di body, pakai yang lama)
     const finalSiswaId = siswa_id || targetSiswaId;
 
     await db.query(
@@ -133,7 +120,6 @@ router.put("/:id", async (req, res) => {
 // DELETE: Hapus Prestasi
 router.delete("/:id", async (req, res) => {
   try {
-    // Cek kepemilikan sebelum hapus
     const [existing] = await db.query("SELECT siswa_id FROM prestasi WHERE id = ?", [req.params.id]);
     if (existing.length === 0) return res.status(404).json({ message: "Data tidak ditemukan" });
 

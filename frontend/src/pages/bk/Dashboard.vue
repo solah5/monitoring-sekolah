@@ -12,7 +12,6 @@
           <ul class="space-y-3">
             <li><router-link to="/bk" class="nav-link nav-link-active"><HomeIcon class="w-5 h-5" /><span>Dashboard</span></router-link></li>
             <li><router-link to="/bk/rekap" class="nav-link"><ChartBarIcon class="w-5 h-5" /><span>Rekap & Eligible</span></router-link></li>
-            <li><router-link to="/bk/prestasi" class="nav-link"><TrophyIcon class="w-5 h-5" /><span>Prestasi Siswa</span></router-link></li>
           </ul>
         </nav>
         <div class="p-4 mt-auto"><button @click="logout" class="w-full bg-red-500 py-2.5 px-4 rounded-lg text-sm hover:bg-red-600 transition-colors flex items-center justify-center gap-2"><ArrowLeftOnRectangleIcon class="w-5 h-5" /><span>Logout</span></button></div>
