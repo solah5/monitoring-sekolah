@@ -1,6 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50 flex font-sans">
     <div v-if="openSidebar" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" @click="openSidebar = false"></div>
+
     <aside :class="['h-screen w-64 bg-[#0057A8] text-white flex-col overflow-y-auto transition-transform duration-300 fixed md:relative z-50', openSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0', openSidebar ? 'flex' : 'hidden md:flex']">
       <div class="relative z-50 bg-[#0057A8] h-full flex flex-col">
         <button @click="openSidebar = false" class="md:hidden absolute top-4 right-4 p-1 text-white"><XMarkIcon class="w-7 h-7" /></button>
@@ -30,10 +31,10 @@
 
       <main class="flex-1 p-4 md:p-8">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <button @click="openForm" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2 w-full md:w-auto justify-center">
+          <button @click="openForm" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2 w-full md:w-auto justify-center transition-colors">
             <PlusIcon class="w-5 h-5" /><span>Tambah Prestasi</span>
           </button>
-          <div class="relative w-full md:w-64">
+          <div class="relative w-full md:w-72">
             <span class="absolute inset-y-0 left-0 flex items-center pl-3"><MagnifyingGlassIcon class="w-5 h-5 text-gray-400" /></span>
             <input v-model="searchQuery" type="text" placeholder="Cari siswa atau prestasi..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
           </div>
@@ -43,72 +44,69 @@
           <table class="w-full text-left min-w-full">
             <thead class="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600">No</th>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600">Nama Siswa</th>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600">Judul Prestasi</th>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600">Tingkat</th>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600">Tahun</th>
-                <th class="py-3 px-5 text-sm font-semibold text-gray-600 text-center">Aksi</th>
+                <th class="py-4 px-6 w-16 text-center text-sm font-semibold text-gray-600">No</th>
+                <th class="py-4 px-6 text-sm font-semibold text-gray-600">Nama Siswa</th>
+                <th class="py-4 px-6 text-sm font-semibold text-gray-600">Judul Prestasi</th>
+                <th class="py-4 px-6 text-sm font-semibold text-gray-600">Tingkat</th>
+                <th class="py-4 px-6 text-sm font-semibold text-gray-600">Tahun</th>
+                <th class="py-4 px-6 text-sm font-semibold text-gray-600 text-center w-24">Aksi</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="paginatedData.length === 0"><td colspan="6" class="py-6 text-center text-gray-500">{{ searchQuery ? 'Data tidak ditemukan.' : 'Belum ada data prestasi.' }}</td></tr>
-              <tr v-for="(item, index) in paginatedData" :key="item.id" class="border-b border-gray-100 hover:bg-gray-50">
-                <td class="py-3 px-5 text-sm text-gray-700">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
-                <td class="py-3 px-5 text-sm text-gray-700 whitespace-nowrap">
-                    {{ item.nama_siswa }} <span class="text-xs text-gray-400">({{ item.kelas }} - {{ item.rombel }})</span>
+              <tr v-if="paginatedData.length === 0"><td colspan="6" class="py-8 text-center text-gray-500">{{ searchQuery ? 'Data tidak ditemukan.' : 'Belum ada data prestasi.' }}</td></tr>
+              <tr v-for="(item, index) in paginatedData" :key="item.id" class="border-b hover:bg-gray-50 transition-colors">
+                <td class="py-4 px-6 text-center text-gray-500 font-medium">#{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
+                <td class="py-4 px-6">
+                    <div class="text-sm font-semibold text-gray-800">{{ item.nama_siswa }}</div>
+                    <div class="text-xs text-gray-500 mt-0.5">{{ item.kelas }} - {{ item.rombel }}</div>
                 </td>
-                <td class="py-3 px-5 text-sm text-gray-700 font-medium">{{ item.judul_prestasi }}</td>
-                <td class="py-3 px-5 text-sm text-gray-700">
-                    <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-bold">{{ item.tingkat }}</span>
-                </td>
-                <td class="py-3 px-5 text-sm text-gray-700">{{ item.tahun }}</td>
-                <td class="py-3 px-5 text-sm text-center whitespace-nowrap">
-                  <button @click="edit(item)" class="text-yellow-600 hover:text-yellow-700 p-1 mx-1"><PencilIcon class="w-5 h-5" /></button>
-                  <button @click="remove(item.id)" class="text-red-600 hover:text-red-700 p-1 mx-1"><TrashIcon class="w-5 h-5" /></button>
+                <td class="py-4 px-6 text-sm text-gray-700 font-medium">{{ item.judul_prestasi }}</td>
+                <td class="py-4 px-6"><span class="bg-yellow-100 text-yellow-800 px-2.5 py-1 rounded text-xs font-bold border border-yellow-200">{{ item.tingkat }}</span></td>
+                <td class="py-4 px-6 text-sm text-gray-600">{{ item.tahun }}</td>
+                <td class="py-4 px-6 text-center whitespace-nowrap">
+                  <button @click="edit(item)" class="text-yellow-600 hover:text-yellow-700 p-1.5 rounded hover:bg-yellow-50 mr-2"><PencilIcon class="w-5 h-5" /></button>
+                  <button @click="remove(item.id)" class="text-red-600 hover:text-red-700 p-1.5 rounded hover:bg-red-50"><TrashIcon class="w-5 h-5" /></button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <div v-if="totalPages > 1" class="flex items-center justify-between mt-4 border-t border-gray-200 pt-4">
+        <div v-if="totalPages > 1" class="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
           <div class="text-sm text-gray-500">Halaman {{ currentPage }} dari {{ totalPages }}</div>
           <div class="flex gap-2">
-             <button @click="prevPage" :disabled="currentPage === 1" class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 text-sm">Sebelumnya</button>
-             <button @click="nextPage" :disabled="currentPage === totalPages" class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50 text-sm">Selanjutnya</button>
+             <button @click="prevPage" :disabled="currentPage === 1" class="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50">Sebelumnya</button>
+             <button @click="nextPage" :disabled="currentPage === totalPages" class="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50">Selanjutnya</button>
           </div>
         </div>
       </main>
     </div>
 
     <div v-if="showForm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4" @click.self="closeForm">
-      <div class="bg-white w-full max-w-md p-6 rounded-xl shadow-xl relative h-auto max-h-[90vh] overflow-visible">
+      <div class="bg-white w-full max-w-md p-6 rounded-xl shadow-2xl relative h-auto max-h-[90vh] overflow-visible">
         <button @click="closeForm" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><XMarkIcon class="w-6 h-6" /></button>
         <h3 class="text-lg font-bold mb-5 text-gray-800">{{ isEdit ? "Edit Prestasi" : "Tambah Prestasi" }}</h3>
 
         <div class="space-y-4">
           <div>
-             <label class="block text-sm font-medium text-gray-600 mb-1">Siswa</label>
+             <label class="block text-sm font-medium text-gray-700 mb-1">Siswa</label>
              <SearchableSelect 
                 :options="siswaOptions" 
                 v-model="form.siswa_nama" 
                 @selected="(opt) => form.siswa_id = opt.originalId" 
                 placeholder="Cari nama siswa..."
              />
-             <p v-if="errors.siswa_id" class="text-red-600 text-sm mt-1">{{ errors.siswa_id }}</p>
+             <p v-if="errors.siswa_id" class="text-red-600 text-xs mt-1">{{ errors.siswa_id }}</p>
           </div>
-
           <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">Judul Prestasi</label>
-            <input v-model="form.judul_prestasi" placeholder="Contoh: Juara 1 Lomba Futsal" class="border p-2 w-full rounded-lg" />
-            <p v-if="errors.judul_prestasi" class="text-red-600 text-sm mt-1">{{ errors.judul_prestasi }}</p>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Judul Prestasi</label>
+            <input v-model="form.judul_prestasi" placeholder="Contoh: Juara 1 Lomba Futsal" class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            <p v-if="errors.judul_prestasi" class="text-red-600 text-xs mt-1">{{ errors.judul_prestasi }}</p>
           </div>
-
           <div class="grid grid-cols-2 gap-4">
              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-1">Tingkat</label>
-                <select v-model="form.tingkat" class="border p-2 w-full rounded-lg bg-white">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tingkat</label>
+                <select v-model="form.tingkat" class="w-full border p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
                    <option value="Sekolah">Sekolah</option>
                    <option value="Kecamatan">Kecamatan</option>
                    <option value="Kabupaten">Kabupaten</option>
@@ -118,13 +116,13 @@
                 </select>
              </div>
              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-1">Tahun</label>
-                <input v-model="form.tahun" type="number" placeholder="YYYY" class="border p-2 w-full rounded-lg" />
-                <p v-if="errors.tahun" class="text-red-600 text-sm mt-1">{{ errors.tahun }}</p>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tahun</label>
+                <input v-model="form.tahun" type="number" class="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                <p v-if="errors.tahun" class="text-red-600 text-xs mt-1">{{ errors.tahun }}</p>
              </div>
           </div>
         </div>
-        <button @click="save" class="bg-blue-600 text-white w-full py-2.5 rounded-lg mt-6 hover:bg-blue-700">Simpan</button>
+        <button @click="save" class="w-full bg-blue-600 text-white py-2.5 rounded-lg mt-6 text-sm font-semibold hover:bg-blue-700 transition-colors">Simpan</button>
       </div>
     </div>
     <Toast ref="toast" />
@@ -159,7 +157,6 @@ export default {
     };
   },
   computed: {
-    // Format list siswa untuk SearchableSelect
     siswaOptions() {
        return this.siswaList.map(s => ({
           label: `${s.nama} (${s.kelas} - ${s.rombel})`,
@@ -170,10 +167,7 @@ export default {
     filteredData() {
       if (!this.searchQuery) return this.prestasiList;
       const q = this.searchQuery.toLowerCase();
-      return this.prestasiList.filter(item => 
-        item.nama_siswa.toLowerCase().includes(q) || 
-        item.judul_prestasi.toLowerCase().includes(q)
-      );
+      return this.prestasiList.filter(item => item.nama_siswa.toLowerCase().includes(q) || item.judul_prestasi.toLowerCase().includes(q));
     },
     totalPages() { return Math.ceil(this.filteredData.length / this.itemsPerPage); },
     paginatedData() {
@@ -181,7 +175,6 @@ export default {
       return this.filteredData.slice(start, start + this.itemsPerPage);
     }
   },
-  watch: { searchQuery() { this.currentPage = 1; } },
   methods: {
     getAuth() { return { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }; },
     async getData() {
@@ -197,14 +190,8 @@ export default {
          else console.error("Gagal load data:", e);
        }
     },
-    openForm() {
-      this.form = { id: null, siswa_id: null, siswa_nama: "", judul_prestasi: "", tingkat: "Sekolah", tahun: new Date().getFullYear() };
-      this.resetErrors(); this.isEdit = false; this.showForm = true;
-    },
-    edit(item) {
-       this.form = { ...item, siswa_nama: item.nama_siswa };
-       this.resetErrors(); this.isEdit = true; this.showForm = true;
-    },
+    openForm() { this.form = { id: null, siswa_id: null, siswa_nama: "", judul_prestasi: "", tingkat: "Sekolah", tahun: new Date().getFullYear() }; this.resetErrors(); this.isEdit = false; this.showForm = true; },
+    edit(item) { this.form = { ...item, siswa_nama: item.nama_siswa }; this.resetErrors(); this.isEdit = true; this.showForm = true; },
     closeForm() { this.showForm = false; },
     resetErrors() { this.errors = { siswa_id: "", judul_prestasi: "", tahun: "" }; },
     validate() {
@@ -231,7 +218,7 @@ export default {
     nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; },
     logout() { localStorage.clear(); this.$router.push("/"); }
   },
-  mounted() { this.getData(); }
+  mounted() { this.getData(); this.$router.afterEach(() => { this.openSidebar = false; }); }
 };
 </script>
 
